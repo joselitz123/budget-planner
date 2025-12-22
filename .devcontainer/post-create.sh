@@ -48,11 +48,6 @@ DB_PASSWORD=budgetpass
 DB_NAME=budgetdb
 DB_SSL_MODE=disable
 
-# Redis
-REDIS_HOST=redis
-REDIS_PORT=6379
-REDIS_PASSWORD=
-
 # Server
 PORT=8080
 ENVIRONMENT=development
@@ -113,14 +108,7 @@ until pg_isready -h postgres -U budgetuser -d budgetdb; do
     sleep 2
 done
 
-# Wait for Redis to be ready
-echo "⏳ Waiting for Redis to be ready..."
-until redis-cli -h redis ping | grep -q "PONG"; do
-    echo "Waiting for Redis..."
-    sleep 2
-done
-
-echo "✅ PostgreSQL and Redis are ready!"
+echo "✅ PostgreSQL is ready!"
 
 # Run database migrations if sqlc is configured
 cd /workspace/backend
