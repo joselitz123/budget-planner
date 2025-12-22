@@ -1,0 +1,44 @@
+# Frontend development container for Budget Planner
+
+# Use official Node.js image with alpine
+FROM node:20-alpine
+
+# Install system dependencies
+RUN apk add --no-cache \
+    git \
+    bash \
+    curl \
+    jq \
+    ca-certificates \
+    openssl \
+    chromium \
+    nss \
+    freetype \
+    harfbuzz \
+    ttf-freefont
+
+# Set working directory
+WORKDIR /workspace/frontend
+
+# Copy package files for dependency caching
+COPY frontend/package.json frontend/package-lock.json* ./
+RUN npm ci --only=production --silent && npm cache clean --force
+
+# Copy the rest of the frontend code
+COPY frontend/ ./
+
+# Install development dependencies
+RUN npm install --silent
+
+# Create non-root user
+RUN addgroup -g 1001 -S appuser && \
+    adduser -u 1001 -S appuser -G appuser
+USER appuser
+
+# Set environment variables for Puppeteer
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser \
+    CHROME_BIN=/usr/bin/chromium-browser
+
+# Default command (will be overridden by devcontainer.json)
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]

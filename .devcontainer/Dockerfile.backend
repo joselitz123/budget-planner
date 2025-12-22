@@ -1,0 +1,46 @@
+# Backend development container for Budget Planner
+
+# Use official Go image
+FROM golang:1.22-alpine
+
+# Install system dependencies
+RUN apk add --no-cache \
+    git \
+    postgresql-client \
+    postgresql-dev \
+    gcc \
+    musl-dev \
+    bash \
+    curl \
+    jq \
+    make \
+    ca-certificates \
+    openssl
+
+# Set working directory
+WORKDIR /workspace/backend
+
+# Install air for live reloading
+RUN go install github.com/air-verse/air@latest
+
+# Copy go mod files for dependency caching
+COPY backend/go.mod backend/go.sum ./
+RUN go mod download
+
+# Copy the rest of the backend code
+COPY backend/ ./
+
+# Install sqlc for SQL code generation
+RUN go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
+
+# Set up environment
+ENV GOPATH=/go
+ENV PATH=$PATH:/go/bin
+
+# Create non-root user
+RUN addgroup -g 1000 -S appuser && \
+    adduser -u 1000 -S appuser -G appuser
+USER appuser
+
+# Default command (will be overridden by devcontainer.json)
+CMD ["air", "-c", ".air.toml"]

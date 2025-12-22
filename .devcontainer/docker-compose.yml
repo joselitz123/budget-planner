@@ -1,0 +1,90 @@
+version: '3.8'
+
+services:
+  app:
+    image: mcr.microsoft.com/devcontainers/base:ubuntu-22.04
+    restart: unless-stopped
+    container_name: budget-planner-dev
+    working_dir: /workspace
+    volumes:
+      - ../..:/workspace:cached
+      - ~/.ssh:/home/vscode/.ssh:ro
+      - ~/.gitconfig:/home/vscode/.gitconfig:ro
+      - ~/.aws:/home/vscode/.aws:ro
+      - docker-data:/home/vscode/.docker
+      - node_modules:/workspace/frontend/node_modules
+      - go-pkg:/go/pkg
+      - go-mod:/go/src/mod
+    environment:
+      - DOCKER_BUILDKIT=1
+      - COMPOSE_DOCKER_CLI_BUILD=1
+    ports:
+      - "5173:5173"
+      - "8080:8080"
+      - "5432:5432"
+    command: sleep infinity
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - budget-planner
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: budget-planner-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: budgetuser
+      POSTGRES_PASSWORD: budgetpass
+      POSTGRES_DB: budgetdb
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "5432:5432"
+    networks:
+      - budget-planner
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U budgetuser -d budgetdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: budget-planner-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - budget-planner
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    container_name: budget-planner-mailhog
+    restart: unless-stopped
+    ports:
+      - "8025:8025" # Web UI
+      - "1025:1025" # SMTP
+    networks:
+      - budget-planner
+
+volumes:
+  postgres-data:
+  redis-data:
+  docker-data:
+  node_modules:
+  go-pkg:
+  go-mod:
+
+networks:
+  budget-planner:
+    driver: bridge

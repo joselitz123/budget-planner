@@ -1,0 +1,94 @@
+{
+  "name": "Budget Planner Development",
+  "dockerComposeFile": ["docker-compose.yml"],
+  "service": "app",
+  "workspaceFolder": "/workspace",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        // Go Development
+        "golang.go",
+        "github.vscode-go-test",
+        "redhat.vscode-yaml",
+        
+        // Svelte/JavaScript/TypeScript Development
+        "svelte.svelte-vscode",
+        "esbenp.prettier-vscode",
+        "dbaeumer.vscode-eslint",
+        "bradlc.vscode-tailwindcss",
+        
+        // Database & SQL
+        "mtxr.sqltools",
+        "mtxr.sqltools-driver-pg",
+        "ms-mssql.data-workspace-vscode",
+        
+        // Docker
+        "ms-azuretools.vscode-docker",
+        
+        // Git
+        "github.vscode-github-actions",
+        "github.copilot",
+        "github.copilot-chat",
+        
+        // API Testing
+        "humao.rest-client",
+        
+        // Productivity
+        "ms-vscode.vscode-serial-monitor",
+        "ms-vscode-remote.remote-containers",
+        "ms-vscode.makefile-tools",
+        
+        // Themes (optional)
+        "dracula-theme.theme-dracula"
+      ],
+      "settings": {
+        "workbench.startupEditor": "none",
+        "files.autoSave": "afterDelay",
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+          "source.fixAll.eslint": "explicit",
+          "source.organizeImports": "explicit"
+        },
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "svelte.enable-ts-plugin": true,
+        "go.useLanguageServer": true,
+        "go.lintTool": "golangci-lint",
+        "go.lintFlags": ["--fast"],
+        "go.formatTool": "goimports",
+        "[go]": {
+          "editor.defaultFormatter": "golang.go"
+        },
+        "[svelte]": {
+          "editor.defaultFormatter": "svelte.svelte-vscode"
+        },
+        "[typescript]": {
+          "editor.defaultFormatter": "esbenp.prettier-vscode"
+        },
+        "[javascript]": {
+          "editor.defaultFormatter": "esbenp.prettier-vscode"
+        },
+        "sqltools.connections": [
+          {
+            "name": "Budget Planner DB",
+            "driver": "PostgreSQL",
+            "server": "postgres",
+            "port": 5432,
+            "database": "budgetdb",
+            "username": "budgetuser",
+            "password": "budgetpass",
+            "previewLimit": 50,
+            "connectionTimeout": 30
+          }
+        ]
+      }
+    }
+  },
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+  "remoteUser": "appuser",
+  "features": {
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+    "ghcr.io/devcontainers/features/node:1": {}
+  },
+  "forwardPorts": [5173, 8080, 5432, 6379]
+}
