@@ -8,8 +8,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/joselitophala/budget-planner-backend/internal/models"
-	"github.com/joselitophala/budget-planner-backend/internal/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -222,23 +220,4 @@ func TestPaymentMethodsHandler_DeletePaymentMethod(t *testing.T) {
 		require.NoError(t, err)
 		assert.True(t, response.Success)
 	})
-}
-
-// Helper function to create a test payment method
-func CreateTestPaymentMethod(t *testing.T, ctx context.Context, userID, name, paymentType string) string {
-	t.Helper()
-
-	lastFour := "4242"
-	method, err := TestQueries.CreatePaymentMethod(ctx, models.CreatePaymentMethodParams{
-		UserID:   utils.PgUUID(userID),
-		Name:     name,
-		Type:     paymentType,
-		LastFour: utils.PgTextPtr(&lastFour),
-		Brand:    utils.PgTextPtr(strPtr("Visa")),
-		IsActive: utils.PgBool(true),
-	})
-	if err != nil {
-		t.Fatalf("Failed to create test payment method: %v", err)
-	}
-	return method.ID
 }

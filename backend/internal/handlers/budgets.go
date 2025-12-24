@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/joselitophala/budget-planner-backend/internal/auth"
 	"github.com/joselitophala/budget-planner-backend/internal/models"
 	"github.com/joselitophala/budget-planner-backend/internal/utils"
@@ -115,7 +116,7 @@ func (h *BudgetHandler) GetBudgetByMonth(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	monthStr := r.PathValue("month")
+	monthStr := chi.URLParam(r, "month")
 	if monthStr == "" {
 		utils.BadRequest(w, "Month is required (format: YYYY-MM)")
 		return
@@ -156,7 +157,7 @@ func (h *BudgetHandler) GetBudgetByMonth(w http.ResponseWriter, r *http.Request)
 
 // GetBudget returns a budget by ID
 func (h *BudgetHandler) GetBudget(w http.ResponseWriter, r *http.Request) {
-	budgetID := r.PathValue("id")
+	budgetID := chi.URLParam(r, "id")
 	if budgetID == "" {
 		utils.BadRequest(w, "Budget ID is required")
 		return
@@ -236,7 +237,7 @@ func (h *BudgetHandler) CreateBudget(w http.ResponseWriter, r *http.Request) {
 
 // UpdateBudget updates an existing budget
 func (h *BudgetHandler) UpdateBudget(w http.ResponseWriter, r *http.Request) {
-	budgetID := r.PathValue("id")
+	budgetID := chi.URLParam(r, "id")
 	if budgetID == "" {
 		utils.BadRequest(w, "Budget ID is required")
 		return
@@ -278,7 +279,7 @@ func (h *BudgetHandler) UpdateBudget(w http.ResponseWriter, r *http.Request) {
 
 // DeleteBudget soft deletes a budget
 func (h *BudgetHandler) DeleteBudget(w http.ResponseWriter, r *http.Request) {
-	budgetID := r.PathValue("id")
+	budgetID := chi.URLParam(r, "id")
 	if budgetID == "" {
 		utils.BadRequest(w, "Budget ID is required")
 		return
@@ -297,7 +298,7 @@ func (h *BudgetHandler) DeleteBudget(w http.ResponseWriter, r *http.Request) {
 
 // GetBudgetCategories returns all categories for a budget
 func (h *BudgetHandler) GetBudgetCategories(w http.ResponseWriter, r *http.Request) {
-	budgetID := r.PathValue("id")
+	budgetID := chi.URLParam(r, "id")
 	if budgetID == "" {
 		utils.BadRequest(w, "Budget ID is required")
 		return
@@ -331,7 +332,7 @@ func (h *BudgetHandler) GetBudgetCategories(w http.ResponseWriter, r *http.Reque
 
 // AddBudgetCategory adds a category to a budget
 func (h *BudgetHandler) AddBudgetCategory(w http.ResponseWriter, r *http.Request) {
-	budgetID := r.PathValue("id")
+	budgetID := chi.URLParam(r, "id")
 	if budgetID == "" {
 		utils.BadRequest(w, "Budget ID is required")
 		return
@@ -367,7 +368,7 @@ func (h *BudgetHandler) AddBudgetCategory(w http.ResponseWriter, r *http.Request
 
 // UpdateBudgetCategory updates a budget category limit
 func (h *BudgetHandler) UpdateBudgetCategory(w http.ResponseWriter, r *http.Request) {
-	categoryID := r.PathValue("categoryId")
+	categoryID := chi.URLParam(r, "categoryId")
 	if categoryID == "" {
 		utils.BadRequest(w, "Category ID is required")
 		return
@@ -405,7 +406,7 @@ func (h *BudgetHandler) UpdateBudgetCategory(w http.ResponseWriter, r *http.Requ
 
 // RemoveBudgetCategory removes a category from a budget
 func (h *BudgetHandler) RemoveBudgetCategory(w http.ResponseWriter, r *http.Request) {
-	categoryID := r.PathValue("categoryId")
+	categoryID := chi.URLParam(r, "categoryId")
 	if categoryID == "" {
 		utils.BadRequest(w, "Category ID is required")
 		return

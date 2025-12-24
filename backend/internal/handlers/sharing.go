@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/joselitophala/budget-planner-backend/internal/auth"
 	"github.com/joselitophala/budget-planner-backend/internal/models"
 	"github.com/joselitophala/budget-planner-backend/internal/utils"
@@ -106,7 +107,7 @@ func (h *SharingHandler) RespondToInvitation(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	invitationID := r.PathValue("id")
+	invitationID := chi.URLParam(r, "id")
 	if invitationID == "" {
 		utils.BadRequest(w, "Invitation ID is required")
 		return
@@ -167,7 +168,7 @@ func (h *SharingHandler) CancelInvitation(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	invitationID := r.PathValue("id")
+	invitationID := chi.URLParam(r, "id")
 	if invitationID == "" {
 		utils.BadRequest(w, "Invitation ID is required")
 		return
@@ -198,7 +199,7 @@ func (h *SharingHandler) CancelInvitation(w http.ResponseWriter, r *http.Request
 
 // GetBudgetSharing returns who has access to a budget
 func (h *SharingHandler) GetBudgetSharing(w http.ResponseWriter, r *http.Request) {
-	budgetID := r.PathValue("budgetId")
+	budgetID := chi.URLParam(r, "budgetId")
 	if budgetID == "" {
 		utils.BadRequest(w, "Budget ID is required")
 		return
@@ -221,7 +222,7 @@ func (h *SharingHandler) RemoveAccess(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	accessID := r.PathValue("id")
+	accessID := chi.URLParam(r, "id")
 	if accessID == "" {
 		utils.BadRequest(w, "Access ID is required")
 		return

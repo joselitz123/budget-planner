@@ -260,36 +260,51 @@ utils.PgInt4(5)
 
 ### Chi Router Path Values in Tests
 
-The backend uses Chi router which extracts path values via `r.PathValue("id")`. In tests:
+The backend uses Chi router which extracts path values via `chi.URLParam(r, "id")`. All handlers have been updated to use this pattern.
+
+**Important:** Tests must use the `setAuthContext()` helper from `test_setup.go` which:
+1. Sets the authenticated user context
+2. Sets up Chi router context with URL parameters extracted from the request URL
 
 ```go
-// ❌ This doesn't work - PathValue returns empty string
+// ✅ Correct test setup
 req := httptest.NewRequest("PUT", "/api/categories/123", body)
+setAuthContext(req, userID)  // Sets up both auth + Chi context
+w := httptest.NewRecorder()
 
-// ✅ Use chi.URLParam instead (preferred for handlers)
-// In handler: change r.PathValue("id") to chi.URLParam(r, "id")
-
-// ✅ Or set up Chi context in tests
-rctx := chi.NewRouteContext()
-rctx.URLParams.Add("id", "123")
-req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+h.UpdateCategory(w, req)  // chi.URLParam(r, "id") now works
 ```
+
+The `setAuthContext()` function automatically parses URLs like:
+- `/api/categories/{id}` → adds "id" parameter
+- `/api/budgets/{id}` → adds "id" parameter
+- `/api/analytics/dashboard/{month}` → adds "month" parameter
+- `/api/budgets/{budgetId}/categories/{categoryId}` → adds both parameters
+- `/api/shares/invitations/{id}` → adds "id" parameter
 
 ### Current Test Status
 
-As of 2025-01-24: **34/49 tests passing (69%)**
+As of 2025-12-24: **34/49 tests passing (69%)**
 
-| Handler | Passing | Notes |
-|---------|---------|-------|
-| Auth | 5/5 | ✅ All passing |
-| Budgets | 8/8 | ✅ All passing |
-| Categories | 4/6 | Update/Delete need path value fix |
-| Payment Methods | 4/6 | Get needs path value fix |
-| Reflections | 5/6 | Update needs path value fix |
-| Sync | 4/5 | ResolveConflict needs fix |
-| Analytics | 1/4 | Multiple endpoint issues |
-| Sharing | 1/7 | Path value issues |
-| Transactions | 2/7 | Path value + query issues |
+| Handler | Passing | Total | Status |
+|---------|---------|-------|--------|
+| Auth | 4 | 5 | ⚠️ CompleteOnboarding has logic issue |
+| Budgets | 6 | 8 | ⚠️ GetBudgetByMonth, GetBudgetCategories URL issues |
+| Categories | 6 | 6 | ✅ **ALL PASSING** |
+| Payment Methods | 6 | 6 | ✅ **ALL PASSING** |
+| Reflections | 1 | 6 | ⚠️ 5 tests failing (URL pattern issues) |
+| Sharing | 3 | 7 | ⚠️ 4 tests failing (URL pattern/logic issues) |
+| Sync | 3 | 5 | ⚠️ ResolveConflict handler logic issue |
+| Transactions | 4 | 7 | ⚠️ ListTransactions query issue |
+| Analytics | 1 | 4 | ⚠️ Budget not found, JSON marshaling |
+
+**Key Achievement:** Chi router path parameter extraction is now working correctly. Categories and Payment Methods are 100% passing.
+
+**Remaining Issues:**
+- URL pattern edge cases in `test_setup.go` for reflections, shares, budgets
+- Handler logic issues (Sync ResolveConflict, Auth CompleteOnboarding, Sharing CreateInvitation)
+- Analytics issues (budget timing, JSON unmarshaling)
+- Transactions List query execution
 
 ---
 

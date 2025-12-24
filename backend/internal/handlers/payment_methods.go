@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/joselitophala/budget-planner-backend/internal/auth"
 	"github.com/joselitophala/budget-planner-backend/internal/models"
 	"github.com/joselitophala/budget-planner-backend/internal/utils"
@@ -88,7 +89,7 @@ func (h *PaymentMethodHandler) GetPaymentMethod(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	methodID := r.PathValue("id")
+	methodID := chi.URLParam(r, "id")
 	if methodID == "" {
 		utils.BadRequest(w, "Payment method ID is required")
 		return
@@ -144,7 +145,7 @@ func (h *PaymentMethodHandler) UpdatePaymentMethod(w http.ResponseWriter, r *htt
 		return
 	}
 
-	methodID := r.PathValue("id")
+	methodID := chi.URLParam(r, "id")
 	if methodID == "" {
 		utils.BadRequest(w, "Payment method ID is required")
 		return
@@ -183,7 +184,7 @@ func (h *PaymentMethodHandler) DeletePaymentMethod(w http.ResponseWriter, r *htt
 		return
 	}
 
-	methodID := r.PathValue("id")
+	methodID := chi.URLParam(r, "id")
 	if methodID == "" {
 		utils.BadRequest(w, "Payment method ID is required")
 		return

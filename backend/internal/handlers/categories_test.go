@@ -8,7 +8,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/joselitophala/budget-planner-backend/internal/auth"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -216,10 +215,4 @@ func TestCategoriesHandler_DeleteCategory(t *testing.T) {
 		require.NoError(t, err)
 		assert.True(t, response.Success)
 	})
-}
-
-// Helper function to set auth context for http.Request
-func setAuthContext(req *http.Request, userID string) {
-	ctx := auth.SetUserIDInContext(req, userID)
-	*req = *req.WithContext(ctx)
 }

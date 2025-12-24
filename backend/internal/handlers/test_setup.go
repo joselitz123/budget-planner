@@ -3,10 +3,13 @@ package handlers
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joselitophala/budget-planner-backend/internal/auth"
 	"github.com/joselitophala/budget-planner-backend/internal/models"
@@ -174,4 +177,115 @@ func CreateTestBudget(t *testing.T, ctx context.Context, userID, month string, t
 		t.Fatalf("Failed to create test budget: %v", err)
 	}
 	return budget.ID
+}
+
+// CreateTestPaymentMethod creates a test payment method for the given user
+func CreateTestPaymentMethod(t *testing.T, ctx context.Context, userID, name, methodType string) string {
+	t.Helper()
+
+	paymentMethod, err := TestQueries.CreatePaymentMethod(ctx, models.CreatePaymentMethodParams{
+		UserID:   utils.PgUUID(userID),
+		Name:     name,
+		Type:     methodType,
+		IsDefault: utils.PgBool(false),
+		IsActive:  utils.PgBool(true),
+	})
+	if err != nil {
+		t.Fatalf("Failed to create test payment method: %v", err)
+	}
+	return paymentMethod.ID
+}
+
+// setAuthContext sets up auth context for http.Request in tests
+// This also sets up Chi router context for path parameter extraction
+func setAuthContext(req *http.Request, userID string) {
+	ctx := auth.SetUserIDInContext(req, userID)
+
+	// Set up Chi router context for path parameter extraction
+	// This is needed for chi.URLParam to work in tests
+	rctx := chi.NewRouteContext()
+
+	// Parse the URL path to extract path parameters
+	pathParts := splitPath(req.URL.Path)
+
+	// Common patterns:
+	// /api/categories/{id} -> ["api", "categories", "{id}"]
+	// /api/budgets/{id} -> ["api", "budgets", "{id}"]
+	// /api/analytics/dashboard/{month} -> ["api", "analytics", "dashboard", "{month}"]
+	// /api/shares/invitations/{id} -> ["api", "shares", "invitations", "{id}"]
+	// /api/payment-methods/{id} -> ["api", "payment-methods", "{id}"]
+	// /api/reflections/{month} -> ["api", "reflections", "{month}"]
+	// /api/budgets/{budgetId}/categories/{categoryId} -> ["api", "budgets", "{budgetId}", "categories", "{categoryId}"]
+
+	if len(pathParts) >= 1 && pathParts[0] == "api" {
+		switch len(pathParts) {
+		case 3: // /api/{resource}/{id}
+			// Most common pattern: /api/categories/{id}, /api/budgets/{id}, etc.
+			rctx.URLParams.Add("id", pathParts[2])
+
+		case 4: // /api/{resource}/{sub-resource}/{id-or-value}
+			resource := pathParts[1]
+			switch resource {
+			case "analytics":
+				// /api/analytics/dashboard/{month}
+				// /api/analytics/spending/{month}
+				rctx.URLParams.Add("month", pathParts[3])
+			case "shares":
+				// /api/shares/invitations/{id}
+				rctx.URLParams.Add("id", pathParts[3])
+			case "payment-methods":
+				// This should be length 3, but handle if tests use different pattern
+				rctx.URLParams.Add("id", pathParts[3])
+			default:
+				// Handle unexpected patterns
+				rctx.URLParams.Add("id", pathParts[3])
+			}
+
+		case 5: // /api/{resource}/{id}/{sub-resource}/{sub-id}
+			resource := pathParts[1]
+			if resource == "budgets" && pathParts[3] == "categories" {
+				// /api/budgets/{budgetId}/categories/{categoryId}
+				rctx.URLParams.Add("budgetId", pathParts[2])
+				rctx.URLParams.Add("categoryId", pathParts[4])
+			} else if resource == "budgets" {
+				// /api/budgets/{id}/categories - for AddBudgetCategory
+				rctx.URLParams.Add("id", pathParts[2])
+			} else if resource == "analytics" && pathParts[3] == "category" {
+				// /api/analytics/category/{categoryId}
+				rctx.URLParams.Add("categoryId", pathParts[4])
+			} else {
+				// General pattern: /api/{resource}/{id}/{sub-resource}/{sub-id}
+				rctx.URLParams.Add("id", pathParts[2])
+				rctx.URLParams.Add(pathParts[3]+"Id", pathParts[4])
+			}
+
+		case 6: // /api/budgets/{id}/categories/{categoryId}/...
+			// /api/budgets/{budgetId}/categories/{categoryId}
+			rctx.URLParams.Add("budgetId", pathParts[2])
+			rctx.URLParams.Add("categoryId", pathParts[4])
+		}
+	}
+
+	*req = *req.WithContext(context.WithValue(ctx, chi.RouteCtxKey, rctx))
+}
+
+// splitPath splits URL path into parts
+func splitPath(path string) []string {
+	if path == "" || path == "/" {
+		return []string{}
+	}
+
+	// Remove leading slash and split
+	path = path[1:]
+	if path == "" {
+		return []string{}
+	}
+
+	parts := make([]string, 0)
+	for _, part := range strings.Split(path, "/") {
+		if part != "" {
+			parts = append(parts, part)
+		}
+	}
+	return parts
 }

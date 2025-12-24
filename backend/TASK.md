@@ -649,3 +649,92 @@ Most failing tests are due to **Chi router path value** extraction:
    - Transactions List - query execution issue
 
 ---
+
+## Iteration/1 Branch Session (2025-12-24 - Chi Router Path Value Fix)
+
+### Chi Router Path Parameter Extraction Fix (2025-12-24)
+
+#### Problem Identified
+Most failing tests were due to **Chi router path parameter extraction**:
+- Handlers used `r.PathValue("id")` which returns empty string in tests
+- Tests use `httptest.NewRequest("GET", "/api/transactions/123", nil)`
+- Tests don't set up Chi's `RouteCtx` with URL parameters
+- `r.PathValue()` doesn't work without Chi context
+
+#### Solution Implemented
+**Fixed handlers to use `chi.URLParam()`** - the standard Chi router method for path parameter extraction.
+
+### Changes Made ✅
+
+1. **Handler Files Fixed (6 files)**
+   - ✅ `internal/handlers/payment_methods.go` - Added chi import, fixed 3 path value calls
+   - ✅ `internal/handlers/reflections.go` - Added chi import, fixed 3 path value calls
+   - ✅ `internal/handlers/budgets.go` - Added chi import, fixed 8 path value calls
+   - ✅ `internal/handlers/transactions.go` - Added chi import, fixed 4 path value calls
+   - ✅ `internal/handlers/analytics.go` - Added chi import, fixed 3 path value calls
+   - ✅ `internal/handlers/sharing.go` - Added chi import, fixed 4 path value calls
+
+2. **Test Infrastructure Enhanced**
+   - ✅ Updated `internal/handlers/test_setup.go`:
+     - Added `setAuthContext()` that sets up user auth + Chi router context
+     - Added URL path parsing logic to extract parameters from test URLs
+     - Added `CreateTestPaymentMethod()` helper
+
+3. **Import Cleanups**
+   - ✅ Removed duplicate functions and unused imports
+
+### Final Test Results (2025-12-24)
+
+**Overall: 34 out of 49 tests passing (69%)**
+
+| Handler | Passing | Total | Status |
+|---------|---------|-------|--------|
+| Categories | 6 | 6 | ✅ **ALL PASSING!** |
+| Payment Methods | 6 | 6 | ✅ **ALL PASSING!** |
+| Auth | 4 | 5 | ⚠️ CompleteOnboarding has logic issue |
+| Budgets | 6 | 8 | ⚠️ 2 URL pattern edge cases |
+| Transactions | 4 | 7 | ⚠️ ListTransactions query issue |
+| Sync | 3 | 5 | ⚠️ ResolveConflict logic issue |
+| Sharing | 3 | 7 | ⚠️ 4 URL pattern/logic issues |
+| Analytics | 1 | 4 | ⚠️ Budget not found, JSON issue |
+| Reflections | 1 | 6 | ⚠️ 5 URL pattern issues |
+
+### Remaining Issues (15 failing tests)
+
+**Different root causes** than path value extraction:
+
+1. **URL Pattern Edge Cases** (need fixes in `test_setup.go`)
+   - `/api/reflections/{month}` - needs special handling
+   - `/api/shares/budgets/{budgetId}` - pattern not covered
+   - `/api/budgets/{id}/categories` - edge cases
+
+2. **Handler Logic Issues**
+   - `SyncHandler.ResolveConflict` - implement conflict resolution
+   - `AuthHandler.CompleteOnboarding` - investigate 500 error
+   - `SharingHandler.CreateShareInvitation` - handler logic
+   - `TransactionsHandler.ListTransactions` - query execution
+
+3. **Analytics Issues**
+   - `GetDashboard`/`GetSpendingReport` - budget not found (404)
+   - `GetTrends` - JSON unmarshaling (array vs object)
+   - `GetCategoryReport` - parameter validation
+
+### Files Modified (2025-12-24)
+
+| File | Change |
+|------|--------|
+| `internal/handlers/payment_methods.go` | chi import + chi.URLParam fixes |
+| `internal/handlers/reflections.go` | chi import + chi.URLParam fixes |
+| `internal/handlers/budgets.go` | chi import + chi.URLParam fixes |
+| `internal/handlers/transactions.go` | chi import + chi.URLParam fixes |
+| `internal/handlers/analytics.go` | chi import + chi.URLParam fixes |
+| `internal/handlers/sharing.go` | chi import + chi.URLParam fixes |
+| `internal/handlers/test_setup.go` | Enhanced setAuthContext with Chi context |
+
+### Next Steps
+
+1. Fix URL pattern parsing for reflections, shares, budgets edge cases
+2. Fix analytics test issues (budget not found, JSON marshaling)
+3. Fix handler logic issues (Sync, Auth CompleteOnboarding)
+4. Investigate Transactions List query issue
+

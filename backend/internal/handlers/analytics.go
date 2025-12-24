@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/joselitophala/budget-planner-backend/internal/auth"
 	"github.com/joselitophala/budget-planner-backend/internal/models"
 	"github.com/joselitophala/budget-planner-backend/internal/utils"
@@ -57,7 +58,7 @@ func (h *AnalyticsHandler) GetDashboard(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	monthStr := r.PathValue("month")
+	monthStr := chi.URLParam(r, "month")
 	if monthStr == "" {
 		monthStr = time.Now().Format("2006-01")
 	}
@@ -160,7 +161,7 @@ func (h *AnalyticsHandler) GetSpendingReport(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	monthStr := r.PathValue("month")
+	monthStr := chi.URLParam(r, "month")
 	if monthStr == "" {
 		monthStr = time.Now().Format("2006-01")
 	}
@@ -233,7 +234,7 @@ func (h *AnalyticsHandler) GetCategoryReport(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	categoryID := r.PathValue("categoryId")
+	categoryID := chi.URLParam(r, "categoryId")
 	if categoryID == "" {
 		utils.BadRequest(w, "Category ID is required")
 		return

@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/joselitophala/budget-planner-backend/internal/auth"
 	"github.com/joselitophala/budget-planner-backend/internal/models"
@@ -46,7 +47,7 @@ func (h *ReflectionHandler) GetReflectionByMonth(w http.ResponseWriter, r *http.
 		return
 	}
 
-	monthStr := r.PathValue("month")
+	monthStr := chi.URLParam(r, "month")
 	if monthStr == "" {
 		utils.BadRequest(w, "Month is required (format: YYYY-MM)")
 		return
@@ -128,7 +129,7 @@ func (h *ReflectionHandler) UpdateReflection(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	reflectionID := r.PathValue("id")
+	reflectionID := chi.URLParam(r, "id")
 	if reflectionID == "" {
 		utils.BadRequest(w, "Reflection ID is required")
 		return
@@ -168,7 +169,7 @@ func (h *ReflectionHandler) DeleteReflection(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	reflectionID := r.PathValue("id")
+	reflectionID := chi.URLParam(r, "id")
 	if reflectionID == "" {
 		utils.BadRequest(w, "Reflection ID is required")
 		return

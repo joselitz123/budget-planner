@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/joselitophala/budget-planner-backend/internal/auth"
 	"github.com/joselitophala/budget-planner-backend/internal/models"
@@ -137,7 +138,7 @@ func (h *TransactionHandler) ListTransactions(w http.ResponseWriter, r *http.Req
 
 // GetTransaction returns a single transaction by ID
 func (h *TransactionHandler) GetTransaction(w http.ResponseWriter, r *http.Request) {
-	transactionID := r.PathValue("id")
+	transactionID := chi.URLParam(r, "id")
 	if transactionID == "" {
 		utils.BadRequest(w, "Transaction ID is required")
 		return
@@ -205,7 +206,7 @@ func (h *TransactionHandler) CreateTransaction(w http.ResponseWriter, r *http.Re
 
 // UpdateTransaction updates an existing transaction
 func (h *TransactionHandler) UpdateTransaction(w http.ResponseWriter, r *http.Request) {
-	transactionID := r.PathValue("id")
+	transactionID := chi.URLParam(r, "id")
 	if transactionID == "" {
 		utils.BadRequest(w, "Transaction ID is required")
 		return
@@ -257,7 +258,7 @@ func (h *TransactionHandler) UpdateTransaction(w http.ResponseWriter, r *http.Re
 
 // DeleteTransaction soft deletes a transaction
 func (h *TransactionHandler) DeleteTransaction(w http.ResponseWriter, r *http.Request) {
-	transactionID := r.PathValue("id")
+	transactionID := chi.URLParam(r, "id")
 	if transactionID == "" {
 		utils.BadRequest(w, "Transaction ID is required")
 		return
@@ -276,7 +277,7 @@ func (h *TransactionHandler) DeleteTransaction(w http.ResponseWriter, r *http.Re
 
 // GetBudgetTransactions returns all transactions for a specific budget
 func (h *TransactionHandler) GetBudgetTransactions(w http.ResponseWriter, r *http.Request) {
-	budgetID := r.PathValue("budgetId")
+	budgetID := chi.URLParam(r, "budgetId")
 	if budgetID == "" {
 		utils.BadRequest(w, "Budget ID is required")
 		return

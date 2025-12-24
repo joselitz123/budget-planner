@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/joselitophala/budget-planner-backend/internal/auth"
 	"github.com/joselitophala/budget-planner-backend/internal/models"
@@ -153,7 +154,7 @@ func (h *CategoryHandler) UpdateCategory(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	categoryID := r.PathValue("id")
+	categoryID := chi.URLParam(r, "id")
 	if categoryID == "" {
 		utils.BadRequest(w, "Category ID is required")
 		return
@@ -215,7 +216,7 @@ func (h *CategoryHandler) DeleteCategory(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	categoryID := r.PathValue("id")
+	categoryID := chi.URLParam(r, "id")
 	if categoryID == "" {
 		utils.BadRequest(w, "Category ID is required")
 		return
