@@ -44,6 +44,10 @@
     }
   },
   "postCreateCommand": "bash .devcontainer/post-create.sh",
+  "remoteEnv": {
+    "GIT_CONFIG_GLOBAL": "${containerEnv:HOME}/.gitconfig_container",
+    "GIT_CONFIG_NOSYSTEM": "1"
+  },
   "customizations": {
     "vscode": {
       "extensions": [

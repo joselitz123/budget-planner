@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -10,31 +11,60 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
+	chiMiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 	"github.com/joho/godotenv"
+
+	"github.com/joselitophala/budget-planner-backend/internal/auth"
+	"github.com/joselitophala/budget-planner-backend/internal/config"
+	"github.com/joselitophala/budget-planner-backend/internal/database"
+	"github.com/joselitophala/budget-planner-backend/internal/handlers"
+	_ "github.com/joselitophala/budget-planner-backend/internal/models"
 )
 
 func main() {
 	// Load environment variables
-	err := godotenv.Load()
+	_ = godotenv.Load()
+
+	// Load configuration
+	cfg, err := config.Load()
 	if err != nil {
-		log.Println("Warning: .env file not found")
+		log.Fatalf("Failed to load config: %v", err)
+	}
+
+	// Connect to database
+	db, err := database.NewConnection(context.Background(), cfg.DatabaseURL)
+	if err != nil {
+		log.Fatalf("Failed to connect to database: %v", err)
+	}
+	defer db.Close()
+
+	// Run migrations (optional - comment out if using external migration tool)
+	// err = database.Migrate(context.Background(), db, "sql/schema")
+	// if err != nil {
+	// 	log.Fatalf("Failed to run migrations: %v", err)
+	// }
+
+	// Initialize JWT client
+	jwtClient, err := auth.NewJWTClient(os.Getenv("JWT_SECRET"))
+	if err != nil {
+		log.Fatalf("Failed to initialize JWT client: %v", err)
 	}
 
 	// Create router
 	r := chi.NewRouter()
 
-	// Middleware
-	r.Use(middleware.RequestID)
-	r.Use(middleware.RealIP)
-	r.Use(middleware.Logger)
-	r.Use(middleware.Recoverer)
-	r.Use(middleware.Timeout(60 * time.Second))
+	// Global middleware
+	r.Use(chiMiddleware.RequestID)
+	r.Use(chiMiddleware.RealIP)
+	r.Use(chiMiddleware.Logger)
+	r.Use(chiMiddleware.Recoverer)
+	r.Use(chiMiddleware.Timeout(60 * time.Second))
+	r.Use(chiMiddleware.AllowContentType("application/json"))
 
 	// CORS configuration
 	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:5173", "http://127.0.0.1:5173"},
+		AllowedOrigins:   cfg.AllowedOrigins,
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 		ExposedHeaders:   []string{"Link"},
@@ -42,7 +72,22 @@ func main() {
 		MaxAge:           300,
 	}))
 
-	// Health check endpoint
+	// Auth middleware
+	authMiddleware := auth.NewMiddleware(jwtClient, db.Queries, true)
+
+	// Initialize handlers
+	authHandler := handlers.NewAuthHandler(db.Queries, jwtClient)
+	userHandler := handlers.NewUserHandler(db.Queries)
+	categoryHandler := handlers.NewCategoryHandler(db.Queries)
+	budgetHandler := handlers.NewBudgetHandler(db.Queries)
+	transactionHandler := handlers.NewTransactionHandler(db.Queries)
+	syncHandler := handlers.NewSyncHandler(db.Queries)
+	paymentMethodHandler := handlers.NewPaymentMethodHandler(db.Queries)
+	reflectionHandler := handlers.NewReflectionHandler(db.Queries)
+	sharingHandler := handlers.NewSharingHandler(db.Queries)
+	analyticsHandler := handlers.NewAnalyticsHandler(db.Queries)
+
+	// Health check endpoint (no auth required)
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.Write([]byte(`{"status":"ok"}`))
@@ -50,49 +95,123 @@ func main() {
 
 	// API routes
 	r.Route("/api", func(r chi.Router) {
-		// Auth routes
+		// Auth routes (public)
 		r.Route("/auth", func(r chi.Router) {
-			r.Post("/login", handleLogin)
-			r.Post("/logout", handleLogout)
-			r.Get("/me", handleGetCurrentUser)
-			r.Post("/refresh", handleRefreshToken)
+			r.Post("/login", authHandler.Login)
+			r.Post("/logout", authHandler.Logout)
+			r.Post("/refresh", authHandler.RefreshToken)
+			r.Post("/onboarding", authHandler.CompleteOnboarding)
+			r.Get("/me", authHandler.GetCurrentUser) // Requires auth in handler
 		})
 
-		// Users routes (self-only)
-		r.Route("/users", func(r chi.Router) {
-			r.Get("/me", handleGetUserProfile)
-			r.Put("/me", handleUpdateUserProfile)
-			r.Delete("/me", handleDeleteUser)
-		})
+		// Protected routes (require authentication)
+		r.Group(func(r chi.Router) {
+			r.Use(authMiddleware.RequireAuth())
 
-		// Budgets routes
-		r.Route("/budgets", func(r chi.Router) {
-			r.Get("/", handleListBudgets)
-			r.Post("/", handleCreateBudget)
-			r.Get("/{month}", handleGetBudgetByMonth)
-			r.Route("/{id}", func(r chi.Router) {
-				r.Get("/", handleGetBudget)
-				r.Put("/", handleUpdateBudget)
-				r.Delete("/", handleDeleteBudget)
-				r.Post("/categories", handleAddBudgetCategory)
-				r.Put("/categories/{categoryId}", handleUpdateBudgetCategory)
-				r.Delete("/categories/{categoryId}", handleRemoveBudgetCategory)
-				r.Put("/sharing-settings", handleUpdateSharingSettings)
+			// Users routes (self-only)
+			r.Route("/users", func(r chi.Router) {
+				r.Get("/me", userHandler.GetProfile)
+				r.Put("/me", userHandler.UpdateProfile)
+				r.Delete("/me", userHandler.DeleteAccount)
 			})
-			r.Get("/shared", handleGetSharedBudgets)
-		})
 
-		// Continue with other routes...
+			// Categories routes
+			r.Route("/categories", func(r chi.Router) {
+				r.Get("/", categoryHandler.ListCategories)
+				r.Get("/system", categoryHandler.GetSystemCategories)
+				r.Post("/", categoryHandler.CreateCategory)
+				r.Put("/{id}", categoryHandler.UpdateCategory)
+				r.Delete("/{id}", categoryHandler.DeleteCategory)
+			})
+
+			// Budgets routes
+			r.Route("/budgets", func(r chi.Router) {
+				r.Get("/", budgetHandler.ListBudgets)
+				r.Post("/", budgetHandler.CreateBudget)
+				r.Get("/{month}", budgetHandler.GetBudgetByMonth)
+				r.Route("/{id}", func(r chi.Router) {
+					r.Get("/", budgetHandler.GetBudget)
+					r.Put("/", budgetHandler.UpdateBudget)
+					r.Delete("/", budgetHandler.DeleteBudget)
+					r.Get("/categories", budgetHandler.GetBudgetCategories)
+					r.Post("/categories", budgetHandler.AddBudgetCategory)
+				})
+				r.Put("/categories/{categoryId}", budgetHandler.UpdateBudgetCategory)
+				r.Delete("/categories/{categoryId}", budgetHandler.RemoveBudgetCategory)
+			})
+
+			// Transactions routes
+			r.Route("/transactions", func(r chi.Router) {
+				r.Get("/", transactionHandler.ListTransactions)
+				r.Post("/", transactionHandler.CreateTransaction)
+				r.Route("/{id}", func(r chi.Router) {
+					r.Get("/", transactionHandler.GetTransaction)
+					r.Put("/", transactionHandler.UpdateTransaction)
+					r.Delete("/", transactionHandler.DeleteTransaction)
+				})
+			})
+
+			// Payment Methods routes
+			r.Route("/payment-methods", func(r chi.Router) {
+				r.Get("/", paymentMethodHandler.ListPaymentMethods)
+				r.Post("/", paymentMethodHandler.CreatePaymentMethod)
+				r.Route("/{id}", func(r chi.Router) {
+					r.Get("/", paymentMethodHandler.GetPaymentMethod)
+					r.Put("/", paymentMethodHandler.UpdatePaymentMethod)
+					r.Delete("/", paymentMethodHandler.DeletePaymentMethod)
+				})
+			})
+
+			// Sync routes
+			r.Route("/sync", func(r chi.Router) {
+				r.Post("/push", syncHandler.Push)
+				r.Post("/pull", syncHandler.Pull)
+				r.Get("/status", syncHandler.GetStatus)
+				r.Post("/resolve-conflict", syncHandler.ResolveConflict)
+			})
+
+			// Reflections routes
+			r.Route("/reflections", func(r chi.Router) {
+				r.Get("/month/{month}", reflectionHandler.GetReflectionByMonth)
+				r.Post("/", reflectionHandler.CreateReflection)
+				r.Route("/{id}", func(r chi.Router) {
+					r.Put("/", reflectionHandler.UpdateReflection)
+					r.Delete("/", reflectionHandler.DeleteReflection)
+				})
+				r.Get("/templates", reflectionHandler.ListReflectionTemplates)
+			})
+
+			// Sharing routes
+			r.Route("/sharing", func(r chi.Router) {
+				r.Post("/invite", sharingHandler.CreateShareInvitation)
+				r.Get("/invitations", sharingHandler.GetMyInvitations)
+				r.Route("/invitations/{id}", func(r chi.Router) {
+					r.Put("/respond", sharingHandler.RespondToInvitation)
+					r.Delete("/", sharingHandler.CancelInvitation)
+				})
+				r.Get("/budgets/{budgetId}", sharingHandler.GetBudgetSharing)
+				r.Route("/access/{id}", func(r chi.Router) {
+					r.Delete("/", sharingHandler.RemoveAccess)
+				})
+				r.Get("/shared-with-me", sharingHandler.GetSharedBudgets)
+			})
+
+			// Analytics routes
+			r.Route("/analytics", func(r chi.Router) {
+				r.Get("/dashboard/{month}", analyticsHandler.GetDashboard)
+				r.Get("/spending/{month}", analyticsHandler.GetSpendingReport)
+				r.Get("/trends", analyticsHandler.GetTrends)
+				r.Get("/category/{categoryId}", analyticsHandler.GetCategoryReport)
+			})
+		})
 	})
 
 	// Start server
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
+	addr := cfg.GetServerAddr()
+	log.Printf("Server starting on %s", addr)
 
 	srv := &http.Server{
-		Addr:         ":" + port,
+		Addr:         addr,
 		Handler:      r,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 30 * time.Second,
@@ -101,7 +220,6 @@ func main() {
 
 	// Graceful shutdown
 	go func() {
-		log.Printf("Server starting on port %s", port)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("Server error: %v", err)
 		}
@@ -123,22 +241,10 @@ func main() {
 	log.Println("Server exited")
 }
 
-// Placeholder handlers (to be implemented)
-func handleLogin(w http.ResponseWriter, r *http.Request)              {}
-func handleLogout(w http.ResponseWriter, r *http.Request)             {}
-func handleGetCurrentUser(w http.ResponseWriter, r *http.Request)     {}
-func handleRefreshToken(w http.ResponseWriter, r *http.Request)       {}
-func handleGetUserProfile(w http.ResponseWriter, r *http.Request)     {}
-func handleUpdateUserProfile(w http.ResponseWriter, r *http.Request)  {}
-func handleDeleteUser(w http.ResponseWriter, r *http.Request)         {}
-func handleListBudgets(w http.ResponseWriter, r *http.Request)        {}
-func handleCreateBudget(w http.ResponseWriter, r *http.Request)       {}
-func handleGetBudgetByMonth(w http.ResponseWriter, r *http.Request)   {}
-func handleGetBudget(w http.ResponseWriter, r *http.Request)          {}
-func handleUpdateBudget(w http.ResponseWriter, r *http.Request)       {}
-func handleDeleteBudget(w http.ResponseWriter, r *http.Request)       {}
-func handleAddBudgetCategory(w http.ResponseWriter, r *http.Request)  {}
-func handleUpdateBudgetCategory(w http.ResponseWriter, r *http.Request) {}
-func handleRemoveBudgetCategory(w http.ResponseWriter, r *http.Request) {}
-func handleUpdateSharingSettings(w http.ResponseWriter, r *http.Request) {}
-func handleGetSharedBudgets(w http.ResponseWriter, r *http.Request)   {}
+// Helper functions for response writing
+func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(code)
+	// In a real implementation, you'd use json.NewEncoder
+	fmt.Fprintf(w, `{"status":"%s"}`, payload)
+}

@@ -1,0 +1,43 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: budget-planner-postgres
+    environment:
+      POSTGRES_DB: budgetdb
+      POSTGRES_USER: budgetuser
+      POSTGRES_PASSWORD: budgetpass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/sql/schema:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U budgetuser -d budgetdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: budget-planner-backend
+    ports:
+      - "8080:8080"
+    environment:
+      DATABASE_URL: postgres://budgetuser:budgetpass@postgres:5432/budgetdb?sslmode=disable
+      PORT: 8080
+      ENVIRONMENT: development
+      ALLOWED_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
+      JWT_SECRET: dev-secret-key-change-in-production
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+    working_dir: /app
+
+volumes:
+  postgres_data:

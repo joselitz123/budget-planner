@@ -1,0 +1,182 @@
+package utils
+
+import (
+	"fmt"
+	"time"
+
+	"github.com/jackc/pgx/v5/pgtype"
+)
+
+// pgUUID converts a string to pgtype.UUID for database queries
+func PgUUID(s string) pgtype.UUID {
+	var u pgtype.UUID
+	if s != "" {
+		_ = u.Scan(s)
+	}
+	return u
+}
+
+// pgUUIDPtr converts a string pointer to pgtype.UUID pointer
+func PgUUIDPtr(s *string) pgtype.UUID {
+	var u pgtype.UUID
+	if s != nil && *s != "" {
+		_ = u.Scan(*s)
+	}
+	return u
+}
+
+// pgDate converts a time.Time to pgtype.Date
+func PgDate(t interface{}) pgtype.Date {
+	var d pgtype.Date
+	_ = d.Scan(t)
+	return d
+}
+
+// numericToFloat64 converts pgtype.Numeric to float64
+func NumericToFloat64(n pgtype.Numeric) float64 {
+	if !n.Valid {
+		return 0
+	}
+	// Use the underlying float representation
+	f, _ := n.Float64Value()
+	return f.Float64
+}
+
+// pgNumeric converts a float64 to pgtype.Numeric
+func PgNumeric(f float64) pgtype.Numeric {
+	var n pgtype.Numeric
+	_ = n.Scan(f)
+	return n
+}
+
+// uuidToString converts pgtype.UUID to string
+func UUIDToString(u pgtype.UUID) string {
+	if u.Valid {
+		return fmt.Sprintf("%x", u.Bytes)
+	}
+	return ""
+}
+
+// pgText converts a string to pgtype.Text
+func PgText(s string) pgtype.Text {
+	var t pgtype.Text
+	if s != "" {
+		_ = t.Scan(s)
+	}
+	return t
+}
+
+// textToString converts pgtype.Text to string
+func TextToString(t pgtype.Text) string {
+	if t.Valid {
+		return t.String
+	}
+	return ""
+}
+
+// textToStringPtr converts pgtype.Text to *string
+func TextToStringPtr(t pgtype.Text) *string {
+	if t.Valid {
+		return &t.String
+	}
+	return nil
+}
+
+// numericToFloat64Ptr converts pgtype.Numeric to *float64
+func NumericToFloat64Ptr(n pgtype.Numeric) *float64 {
+	if !n.Valid {
+		return nil
+	}
+	f, _ := n.Float64Value()
+	return &f.Float64
+}
+
+// pgNumericPtr converts *float64 to pgtype.Numeric
+func PgNumericPtr(f *float64) pgtype.Numeric {
+	var n pgtype.Numeric
+	if f != nil {
+		_ = n.Scan(*f)
+	}
+	return n
+}
+
+// pgTextPtr converts *string to pgtype.Text
+func PgTextPtr(s *string) pgtype.Text {
+	var t pgtype.Text
+	if s != nil {
+		_ = t.Scan(*s)
+	}
+	return t
+}
+
+// dateToTime converts pgtype.Date to time.Time
+func DateToTime(d pgtype.Date) time.Time {
+	if d.Valid {
+		return d.Time
+	}
+	return time.Time{}
+}
+
+// timestamptzToTime converts pgtype.Timestamptz to time.Time
+func TimestamptzToTime(t pgtype.Timestamptz) time.Time {
+	if t.Valid {
+		return t.Time
+	}
+	return time.Time{}
+}
+
+// pgDatePtr converts *time.Time to pgtype.Date
+func PgDatePtr(t *time.Time) pgtype.Date {
+	var d pgtype.Date
+	if t != nil {
+		_ = d.Scan(*t)
+	}
+	return d
+}
+
+// pgBool converts bool to pgtype.Bool
+func PgBool(b bool) pgtype.Bool {
+	var bo pgtype.Bool
+	_ = bo.Scan(b)
+	return bo
+}
+
+// pgBoolPtr converts *bool to pgtype.Bool
+func PgBoolPtr(b *bool) pgtype.Bool {
+	var bo pgtype.Bool
+	if b != nil {
+		_ = bo.Scan(*b)
+	}
+	return bo
+}
+
+// pgInt4 converts int32 to pgtype.Int4
+func PgInt4(i int32) pgtype.Int4 {
+	var in pgtype.Int4
+	_ = in.Scan(i)
+	return in
+}
+
+// pgInt4Ptr converts *int32 to pgtype.Int4
+func PgInt4Ptr(i *int32) pgtype.Int4 {
+	var in pgtype.Int4
+	if i != nil {
+		_ = in.Scan(*i)
+	}
+	return in
+}
+
+// int4ToInt32 converts pgtype.Int4 to int32
+func Int4ToInt32(i pgtype.Int4) *int32 {
+	if i.Valid {
+		return &i.Int32
+	}
+	return nil
+}
+
+// pgTimestamptz converts time.Time to pgtype.Timestamptz
+func PgTimestamptz(t time.Time) pgtype.Timestamptz {
+	var ts pgtype.Timestamptz
+	_ = ts.Scan(t)
+	return ts
+}

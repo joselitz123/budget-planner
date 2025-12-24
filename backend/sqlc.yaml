@@ -15,5 +15,9 @@ sql:
         emit_exact_table_names: false
         emit_result_struct_pointers: false
         emit_params_struct_pointers: false
-        emit_method_with_db_argument: false
         json_tags_case_style: "camel"
+        overrides:
+          - db_type: "uuid"
+            go_type: "string"
+          - db_type: "pg_catalog.uuid"
+            go_type: "string"

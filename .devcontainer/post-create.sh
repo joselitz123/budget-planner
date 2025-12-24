@@ -4,6 +4,31 @@ set -e
 
 echo "🚀 Setting up Budget Planner development environment..."
 
+# Fix git configuration issue
+echo "🔧 Setting up git configuration..."
+if [ -d "$HOME/.gitconfig" ]; then
+    echo "Removing incorrect .gitconfig directory..."
+    rm -rf "$HOME/.gitconfig"
+fi
+
+# Create proper git config file
+if [ ! -f "$HOME/.gitconfig_container" ]; then
+    cat > "$HOME/.gitconfig_container" << 'EOF'
+[user]
+    name = Budget Planner Developer
+    email = developer@example.com
+[core]
+    hooksPath = .githooks
+EOF
+    echo "✅ Created git config at $HOME/.gitconfig_container"
+fi
+
+# Install GLM Coding Helper for Claude Code
+echo "🤖 Setting up GLM Coding Helper for Claude Code..."
+npm list -g @z_ai/coding-helper >/dev/null 2>&1 || npm install -g @z_ai/coding-helper
+echo "✅ GLM Coding Helper installed"
+echo "   Run 'npx @z_ai/coding-helper' or 'chelper' to configure Claude Code with GLM"
+
 # Install Go dependencies
 echo "📦 Installing Go dependencies..."
 cd /workspace/backend
@@ -26,11 +51,11 @@ else
     echo "⚠️  package.json not found, skipping Node.js dependencies"
 fi
 
-# Setup git hooks if .git exists
+# Setup git hooks if .git exists (using the fixed git config)
 if [ -d "/workspace/.git" ]; then
     echo "🔧 Setting up git hooks..."
-    git config core.hooksPath .githooks
-    chmod +x .githooks/*
+    GIT_CONFIG_GLOBAL="$HOME/.gitconfig_container" GIT_CONFIG_NOSYSTEM=1 git config core.hooksPath .githooks
+    chmod +x .githooks/* 2>/dev/null || echo "⚠️  No .githooks directory found, skipping..."
 fi
 
 # Create environment files if they don't exist
@@ -133,10 +158,16 @@ fi
 echo "🎉 Development environment setup complete!"
 echo ""
 echo "Next steps:"
-echo "1. Update the .env files with your Clerk API keys"
-echo "2. Start the development servers:"
+echo "1. Configure Claude Code with GLM Coding Plan:"
+echo "   - Run: npx @z_ai/coding-helper"
+echo "   - Follow the prompts to set up your API key"
+echo ""
+echo "2. Update the .env files with your Clerk API keys"
+echo ""
+echo "3. Start the development servers:"
 echo "   - Backend: cd backend && air"
 echo "   - Frontend: cd frontend && npm run dev"
-echo "3. Access the application at http://localhost:5173"
+echo ""
+echo "4. Access the application at http://localhost:5173"
 echo ""
 echo "Happy coding! 💻"

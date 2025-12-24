@@ -9,7 +9,6 @@ services:
     volumes:
       - ../..:/workspace:cached
       - ~/.ssh:/home/vscode/.ssh:ro
-      - ~/.gitconfig:/home/vscode/.gitconfig:ro
       - ~/.aws:/home/vscode/.aws:ro
       - docker-data:/home/vscode/.docker
       - node_modules:/workspace/frontend/node_modules
