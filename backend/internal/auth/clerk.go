@@ -48,6 +48,14 @@ func (c *JWTClient) VerifyToken(tokenString string) (string, error) {
 	return "", fmt.Errorf("invalid token")
 }
 
+// GenerateToken creates a new JWT token for testing purposes
+func (c *JWTClient) GenerateToken(userID string) (string, error) {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"sub": userID,
+	})
+	return token.SignedString([]byte(c.secret))
+}
+
 // ExtractTokenFromRequest extracts the JWT token from the Authorization header
 func ExtractTokenFromRequest(r *http.Request) (string, error) {
 	authHeader := r.Header.Get("Authorization")

@@ -191,6 +191,108 @@ When adding migrations:
 
 ---
 
+## Testing
+
+### Running Tests
+
+```bash
+cd backend
+
+# Run all tests with database connection
+DATABASE_URL="postgresql://budgetuser:budgetpass@localhost:5432/budgetdb?sslmode=disable" go test ./...
+
+# Run specific test file
+DATABASE_URL="postgresql://budgetuser:budgetpass@localhost:5432/budgetdb?sslmode=disable" go test ./internal/handlers/auth_test.go -v
+
+# Run with coverage
+DATABASE_URL="postgresql://budgetuser:budgetpass@localhost:5432/budgetdb?sslmode=disable" go test ./... -cover
+```
+
+### Test Infrastructure
+
+Tests are located in `backend/internal/handlers/*_test.go` and use:
+
+- **test_setup.go**: Common test utilities including:
+  - `CreateTestUser()` - Creates a test user with unique ID
+  - `CreateTestBudget()` - Creates a test budget for a user
+  - `CreateTestCategory()` - Creates a test category
+  - `CreateTestPaymentMethod()` - Creates a test payment method
+  - `CleanupTestUser()` - Soft-deletes test user (cascades to related records)
+  - `setAuthContext()` - Sets authenticated user context in test requests
+  - `GenerateTestToken()` - Creates a valid JWT for testing
+
+- **Test Database**: Tests use the same PostgreSQL database as development
+  - Uses soft deletes (`deleted = true`) for cleanup
+  - Unique identifiers prevent duplicate key conflicts
+
+### Type Conversions for Tests
+
+When writing tests that interact with the database, use the helpers in `internal/utils/types.go`:
+
+```go
+// String → pgtype.UUID
+utils.PgUUID("user-id-123")
+
+// time.Time → pgtype.Date (for budgets)
+parsedTime, _ := time.Parse("2006-01-02", "2025-01-01")
+utils.PgDate(parsedTime)
+
+// float64 → pgtype.Numeric (for amounts, limits)
+utils.PgNumeric(5000.00)
+
+// string → pgtype.Text (for optional text fields)
+utils.PgText("value")       // for required text
+utils.PgTextPtr(&strPtr)    // for optional text pointers
+
+// bool → pgtype.Bool
+utils.PgBool(true)
+utils.PgBoolPtr(&boolPtr)
+
+// int32 → pgtype.Int4 (for ratings)
+utils.PgInt4(5)
+```
+
+**Important:** Some sqlc-generated model fields use plain Go types, not pgtype:
+- `CreatePaymentMethodParams.Name` is `string`, not `pgtype.Text`
+- `CreatePaymentMethodParams.Type` is `string`, not `pgtype.Text`
+- `CreateShareInvitationParams.RecipientEmail` is `string`, not `pgtype.Text`
+- `CreateShareInvitationParams.Permission` is `string`, not `pgtype.Text`
+
+### Chi Router Path Values in Tests
+
+The backend uses Chi router which extracts path values via `r.PathValue("id")`. In tests:
+
+```go
+// ❌ This doesn't work - PathValue returns empty string
+req := httptest.NewRequest("PUT", "/api/categories/123", body)
+
+// ✅ Use chi.URLParam instead (preferred for handlers)
+// In handler: change r.PathValue("id") to chi.URLParam(r, "id")
+
+// ✅ Or set up Chi context in tests
+rctx := chi.NewRouteContext()
+rctx.URLParams.Add("id", "123")
+req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+```
+
+### Current Test Status
+
+As of 2025-01-24: **34/49 tests passing (69%)**
+
+| Handler | Passing | Notes |
+|---------|---------|-------|
+| Auth | 5/5 | ✅ All passing |
+| Budgets | 8/8 | ✅ All passing |
+| Categories | 4/6 | Update/Delete need path value fix |
+| Payment Methods | 4/6 | Get needs path value fix |
+| Reflections | 5/6 | Update needs path value fix |
+| Sync | 4/5 | ResolveConflict needs fix |
+| Analytics | 1/4 | Multiple endpoint issues |
+| Sharing | 1/7 | Path value issues |
+| Transactions | 2/7 | Path value + query issues |
+
+---
+
 ## Environment Configuration
 
 Required environment variables:

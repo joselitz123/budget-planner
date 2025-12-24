@@ -2,6 +2,7 @@ package utils
 
 import (
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgtype"
@@ -45,7 +46,19 @@ func NumericToFloat64(n pgtype.Numeric) float64 {
 // pgNumeric converts a float64 to pgtype.Numeric
 func PgNumeric(f float64) pgtype.Numeric {
 	var n pgtype.Numeric
-	_ = n.Scan(f)
+	// Convert float64 to string first, then scan into Numeric
+	// This is more reliable than direct float scanning
+	_ = n.Scan(strconv.FormatFloat(f, 'f', -1, 64))
+	return n
+}
+
+// pgNumericPtr converts *float64 to pgtype.Numeric
+func PgNumericPtr(f *float64) pgtype.Numeric {
+	if f == nil {
+		return pgtype.Numeric{Valid: false}
+	}
+	var n pgtype.Numeric
+	_ = n.Scan(strconv.FormatFloat(*f, 'f', -1, 64))
 	return n
 }
 
@@ -89,15 +102,6 @@ func NumericToFloat64Ptr(n pgtype.Numeric) *float64 {
 	}
 	f, _ := n.Float64Value()
 	return &f.Float64
-}
-
-// pgNumericPtr converts *float64 to pgtype.Numeric
-func PgNumericPtr(f *float64) pgtype.Numeric {
-	var n pgtype.Numeric
-	if f != nil {
-		_ = n.Scan(*f)
-	}
-	return n
 }
 
 // pgTextPtr converts *string to pgtype.Text

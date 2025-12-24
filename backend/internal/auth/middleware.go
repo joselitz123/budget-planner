@@ -128,3 +128,9 @@ func MustGetUserID(r *http.Request) string {
 	}
 	return userID
 }
+
+// SetUserIDInContext sets the user ID in the request context (for testing purposes)
+func SetUserIDInContext(r *http.Request, userID string) context.Context {
+	ctx := r.Context()
+	return context.WithValue(ctx, UserIDKey, userID)
+}

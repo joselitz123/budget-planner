@@ -196,7 +196,7 @@ CREATE TABLE activity_log (
 -- Critical Indexes
 
 -- Transactions (most queries filter by month/year)
-CREATE INDEX idx_transactions_user_month ON transactions(user_id, DATE_TRUNC('month', transaction_date));
+CREATE INDEX idx_transactions_user_month ON transactions(user_id, DATE_TRUNC('month', transaction_date::timestamp));
 CREATE INDEX idx_transactions_date ON transactions(transaction_date);
 CREATE INDEX idx_transactions_user_category ON transactions(user_id, category_id);
 CREATE INDEX idx_transactions_user_budget ON transactions(user_id, budget_id);
