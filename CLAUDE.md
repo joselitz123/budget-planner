@@ -42,6 +42,7 @@ go build -o ./tmp/main ./cmd/api
 
 ### Frontend (SvelteKit)
 
+**Quick Start:**
 ```bash
 cd frontend
 
@@ -51,17 +52,21 @@ npm install
 # Run dev server
 npm run dev
 
-# Build for production
-npm run build
-
 # Type checking
 npm run check
-npm run check:watch
 
-# Linting and formatting
-npm run lint
-npm run format
+# Build for production
+npm run build
 ```
+
+**For detailed frontend documentation, see `frontend/CLAUDE.md`** which includes:
+- SvelteKit architecture and routing patterns
+- PWA configuration and service workers
+- IndexedDB for offline storage
+- Shadcn-Svelte components
+- State management with stores
+- Clerk authentication integration
+- Environment configuration
 
 ### Database
 
@@ -101,6 +106,24 @@ The application is designed to work offline. Data flows between frontend Indexed
 - SQL queries written in `.sql` files → Go code generated via `sqlc generate`
 - All 10 handlers implemented with 100% test coverage (48/48 tests passing)
 - JWT-based authentication (Clerk-compatible)
+
+### Frontend Architecture
+
+**See `frontend/CLAUDE.md` for detailed frontend architecture including:**
+- SvelteKit file-based routing patterns
+- PWA configuration and service workers
+- IndexedDB for offline storage
+- Shadcn-Svelte component usage
+- State management with Svelte stores
+- Clerk authentication integration
+- API integration patterns
+
+**Quick Overview:**
+- SvelteKit 2.0 + Svelte 5 + TypeScript 5
+- Shadcn-Svelte components + Tailwind CSS
+- IndexedDB (via `idb`) for offline storage
+- Clerk for authentication
+- PWA with service workers for offline functionality
 
 ### Frontend Structure
 
@@ -192,6 +215,7 @@ PUBLIC_API_URL=http://localhost:8080/api
 
 - `starting-point.md` - Full project specification with database schema, API endpoints, and workflows
 - `backend/CLAUDE.md` - **Backend development guide** with architecture patterns, testing, and type conversions
+- `frontend/CLAUDE.md` - **Frontend development guide** with SvelteKit patterns, PWA configuration, and IndexedDB usage
 - `backend/TASK.md` - Backend development task log and session history
 - `AGENTS.md` - AI agent specifications for automation (reference for future development)
 - `.devcontainer/SETUP_GUIDE.md` - Devcontainer setup details and troubleshooting
