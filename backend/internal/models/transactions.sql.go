@@ -186,12 +186,12 @@ func (q *Queries) GetTransactionsByBudget(ctx context.Context, budgetID pgtype.U
 
 const listTransactions = `-- name: ListTransactions :many
 SELECT id, user_id, budget_id, category_id, payment_method_id, amount, type, is_transfer, transfer_to_account_id, description, transaction_date, is_recurring, recurrence_pattern, created_at, updated_at, deleted FROM transactions
-WHERE user_id = $1 
+WHERE user_id = $1
   AND deleted = false
   AND ($2::date IS NULL OR transaction_date >= $2)
   AND ($3::date IS NULL OR transaction_date <= $3)
-  AND ($4::uuid IS NULL OR category_id = $4)
-  AND ($5::uuid IS NULL OR budget_id = $5)
+  AND ($4 = '' OR category_id = $4::uuid)
+  AND ($5 = '' OR budget_id = $5::uuid)
 ORDER BY transaction_date DESC
 LIMIT $6 OFFSET $7
 `

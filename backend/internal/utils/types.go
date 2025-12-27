@@ -65,7 +65,13 @@ func PgNumericPtr(f *float64) pgtype.Numeric {
 // uuidToString converts pgtype.UUID to string
 func UUIDToString(u pgtype.UUID) string {
 	if u.Valid {
-		return fmt.Sprintf("%x", u.Bytes)
+		// Format as standard UUID with hyphens: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+		return fmt.Sprintf("%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
+			u.Bytes[0], u.Bytes[1], u.Bytes[2], u.Bytes[3],
+			u.Bytes[4], u.Bytes[5],
+			u.Bytes[6], u.Bytes[7],
+			u.Bytes[8], u.Bytes[9],
+			u.Bytes[10], u.Bytes[11], u.Bytes[12], u.Bytes[13], u.Bytes[14], u.Bytes[15])
 	}
 	return ""
 }

@@ -7,6 +7,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/joselitophala/budget-planner-backend/internal/models"
+	"github.com/joselitophala/budget-planner-backend/internal/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -57,6 +59,14 @@ func TestAnalyticsHandler_GetSpendingReport(t *testing.T) {
 		budgetID := CreateTestBudget(t, ctx, userID, "2025-01-01", 5000)
 		categoryID := CreateTestCategory(t, ctx, userID, "Food", "🍔", "#FF5733")
 
+		// Link category to budget (required for GetSpendingByCategory query)
+		_, err := TestQueries.AddBudgetCategory(ctx, models.AddBudgetCategoryParams{
+			BudgetID:    utils.PgUUID(budgetID),
+			CategoryID:  utils.PgUUID(categoryID),
+			LimitAmount: utils.PgNumeric(1000.00),
+		})
+		require.NoError(t, err)
+
 		req := httptest.NewRequest("GET", "/api/analytics/spending/2025-01", nil)
 		setAuthContext(req, userID)
 		w := httptest.NewRecorder()
@@ -66,10 +76,10 @@ func TestAnalyticsHandler_GetSpendingReport(t *testing.T) {
 		assert.Equal(t, http.StatusOK, w.Code)
 
 		var response struct {
-			Success bool `json:"success"`
-			Data    map[string]interface{} `json:"data"`
+			Success bool        `json:"success"`
+			Data    []interface{} `json:"data"`
 		}
-		err := json.Unmarshal(w.Body.Bytes(), &response)
+		err = json.Unmarshal(w.Body.Bytes(), &response)
 		require.NoError(t, err)
 		assert.True(t, response.Success)
 
@@ -97,8 +107,8 @@ func TestAnalyticsHandler_GetTrends(t *testing.T) {
 		assert.Equal(t, http.StatusOK, w.Code)
 
 		var response struct {
-			Success bool `json:"success"`
-			Data    map[string]interface{} `json:"data"`
+			Success bool        `json:"success"`
+			Data    []interface{} `json:"data"`
 		}
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		require.NoError(t, err)
@@ -124,11 +134,14 @@ func TestAnalyticsHandler_GetCategoryReport(t *testing.T) {
 
 		h.GetCategoryReport(w, req)
 
+		if w.Code != http.StatusOK {
+			t.Logf("Response body: %s", w.Body.String())
+		}
 		assert.Equal(t, http.StatusOK, w.Code)
 
 		var response struct {
-			Success bool `json:"success"`
-			Data    map[string]interface{} `json:"data"`
+			Success bool        `json:"success"`
+			Data    []interface{} `json:"data"`
 		}
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		require.NoError(t, err)

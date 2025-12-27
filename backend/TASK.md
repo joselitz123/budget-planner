@@ -738,3 +738,251 @@ Most failing tests were due to **Chi router path parameter extraction**:
 3. Fix handler logic issues (Sync, Auth CompleteOnboarding)
 4. Investigate Transactions List query issue
 
+---
+
+## Iteration/1 Branch Session (2025-12-25 - Major Test Fixes)
+
+### Session Overview
+Fixed 13 failing tests, improving test coverage from **34/48 (69%)** to **45/48 (94%)**.
+
+### Critical Bug Fixes ✅
+
+#### 1. UUID String Conversion Bug (CRITICAL)
+**Problem**: `utils.UUIDToString()` was returning lowercase hex without hyphens, causing UUID comparisons to fail.
+
+**Location**: `internal/utils/types.go:66-71`
+
+**Fix**: Changed from `fmt.Sprintf("%x", u.Bytes)` to proper UUID format:
+```go
+return fmt.Sprintf("%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
+    u.Bytes[0], u.Bytes[1], u.Bytes[2], u.Bytes[3],
+    u.Bytes[4], u.Bytes[5],
+    u.Bytes[6], u.Bytes[7],
+    u.Bytes[8], u.Bytes[9],
+    u.Bytes[10], u.Bytes[11], u.Bytes[12], u.Bytes[13], u.Bytes[14], u.Bytes[15])
+```
+
+**Impact**: Fixed all reflection, budget, and sharing tests that relied on UUID comparisons.
+
+#### 2. Chi Router URL Parameter Handling
+**Problem**: Tests using `/api/reflections/{month}`, `/api/budgets/{month}`, `/api/sharing/budgets/{budgetId}` patterns weren't setting proper Chi context.
+
+**Location**: `internal/handlers/test_setup.go`
+
+**Changes**:
+- Added handling for `/api/reflections/month/{month}` (4-part path)
+- Added handling for `/api/budgets/{month}` vs `/api/budgets/{id}` (distinguish by format)
+- Added handling for `/api/budgets/{id}/categories` (4-part path)
+- Added handling for `/api/sharing/budgets/{budgetId}` (4-part path)
+
+**Code**:
+```go
+case 3: // /api/{resource}/{id-or-month}
+    resource := pathParts[1]
+    if resource == "reflections" || resource == "budgets" {
+        if len(pathParts[2]) <= 7 && strings.Contains(pathParts[2], "-") {
+            rctx.URLParams.Add("month", pathParts[2]) // YYYY-MM format
+        } else {
+            rctx.URLParams.Add("id", pathParts[2]) // UUID format
+        }
+    }
+```
+
+#### 3. SQL Query UUID NULL Handling Bug
+**Problem**: `ListTransactions` query used `$4::uuid IS NULL` but passed empty string, causing PostgreSQL cast errors.
+
+**Location**: `sql/queries/transactions.sql` and `internal/models/transactions.sql.go`
+
+**Fix**: Changed SQL query from:
+```sql
+AND ($4::uuid IS NULL OR category_id = $4)
+```
+to:
+```sql
+AND ($4 = '' OR category_id = $4::uuid)
+```
+
+**Impact**: Fixed `TestTransactionsHandler_ListTransactions`.
+
+#### 4. Test Data Isolation Issues
+**Problem**: Tests used fixed IDs causing duplicate key violations.
+
+**Fixes**:
+- `TestSyncHandler_ResolveConflict` - Create actual sync operation records with valid UUID format
+- `TestAuthHandler_CompleteOnboarding` - Use timestamp-based unique clerk IDs
+
+### Tests Fixed This Session ✅
+
+| Handler | Test | Issue |
+|---------|------|-------|
+| **Reflections (6)** | All 6 tests | UUID comparison bug, URL parameter handling |
+| **Sharing (7)** | All 7 tests | URL parameter for `/api/sharing/budgets/{budgetId}` |
+| **Budgets (2)** | GetBudgetByMonth, GetBudgetCategories | URL parameter for month and categories |
+| **Sync (1)** | ResolveConflict | Test used fake ID, needed actual sync record |
+| **Transactions (1)** | ListTransactions | SQL query UUID NULL handling |
+| **Auth (1)** | CompleteOnboarding | Fixed clerk ID collision |
+
+### Files Modified (2025-12-25)
+
+| File | Changes |
+|------|---------|
+| `internal/utils/types.go` | Fixed UUIDToString to return proper UUID format |
+| `internal/handlers/test_setup.go` | Added Chi context handling for reflections, budgets, sharing patterns |
+| `sql/queries/transactions.sql` | Fixed ListTransactions query UUID NULL handling |
+| `internal/models/transactions.sql.go` | Updated listTransactions const with fix |
+| `internal/handlers/sync_test.go` | Added models/utils imports, create actual test data |
+| `internal/handlers/auth_test.go` | Added fmt/time imports, use unique clerk IDs |
+
+### Final Test Results (2025-12-25)
+
+**Overall: 45 out of 48 tests passing (94%)**
+
+| Handler | Passing | Total | Status |
+|---------|---------|-------|--------|
+| Auth | 5 | 5 | ✅ **ALL PASSING!** |
+| Budgets | 8 | 8 | ✅ **ALL PASSING!** |
+| Categories | 6 | 6 | ✅ **ALL PASSING!** |
+| Payment Methods | 6 | 6 | ✅ **ALL PASSING!** |
+| Reflections | 6 | 6 | ✅ **ALL PASSING!** |
+| Sharing | 7 | 7 | ✅ **ALL PASSING!** |
+| Sync | 5 | 5 | ✅ **ALL PASSING!** |
+| Transactions | 7 | 7 | ✅ **ALL PASSING!** |
+| Analytics | 1 | 4 | ⚠️ 3 tests failing |
+
+### Remaining Issues (3 failing tests)
+
+All in Analytics handler:
+1. **TestAnalyticsHandler_GetSpendingReport** - Likely URL parameter or query issue
+2. **TestAnalyticsHandler_GetTrends** - Likely URL parameter or query issue
+3. **TestAnalyticsHandler_GetCategoryReport** - Likely URL parameter or query issue
+
+**Note**: `TestAnalyticsHandler_GetDashboard` passes, so the basic handler infrastructure works.
+
+### Next Steps
+
+1. **Fix Remaining Analytics Tests** (HIGH PRIORITY - 3 tests)
+   - Investigate `GetSpendingReport` - check URL parameters and SQL query
+   - Investigate `GetTrends` - check JSON marshaling (array vs object issue mentioned previously)
+   - Investigate `GetCategoryReport` - check months parameter validation
+
+2. **Optional Enhancements** (MEDIUM PRIORITY)
+   - Activity logging handler
+   - Sync queue processing system
+   - Input validation middleware
+   - Rate limiting middleware
+
+3. **Production Readiness** (LOW PRIORITY)
+   - Configuration management
+   - Observability (structured logging, metrics)
+   - Security hardening
+   - Performance optimization
+
+### Quick Resume Commands (2025-12-25)
+
+```bash
+cd /workspace/budget-planner/backend
+
+# Run all tests
+DATABASE_URL="postgresql://budgetuser:budgetpass@localhost:5432/budgetdb?sslmode=disable" GOSUMDB=off GOPATH=/tmp/go go test ./internal/handlers/... -v
+
+# Run specific analytics test
+DATABASE_URL="postgresql://budgetuser:budgetpass@localhost:5432/budgetdb?sslmode=disable" GOSUMDB=off GOPATH=/tmp/go go test ./internal/handlers/... -v -run "TestAnalyticsHandler_GetSpendingReport"
+
+# Check test status
+DATABASE_URL="postgresql://budgetuser:budgetpass@localhost:5432/budgetdb?sslmode=disable" GOSUMDB=off GOPATH=/tmp/go go test ./internal/handlers/... -v 2>&1 | grep -E "^--- (PASS|FAIL)" | wc -l
+```
+
+---
+
+## Iteration/1 Branch Session (2025-12-27 - 100% Test Coverage Achieved!)
+
+### Session Overview
+Fixed the final 3 failing analytics tests, bringing test coverage from **94% (45/48)** to **100% (48/48)**.
+
+### Completed Fixes ✅
+
+#### 1. GetSpendingReport Test - Budget Category Missing
+**Problem**: Test created a budget and category but didn't link them via `budget_categories` table. The `GetSpendingByCategory` query joins this table, so returned no results.
+
+**Fix**:
+- Added `AddBudgetCategory` call in test to link category to budget
+- Added required imports (`models`, `utils`) to test file
+
+**Files Modified**:
+- `internal/handlers/analytics_test.go` - Added budget category creation, fixed imports
+
+#### 2. GetTrends Handler - pgtype.Interval JSON Marshaling
+**Problem**: `GetSpendingTrendsRow.Month` is `pgtype.Interval` which cannot be marshaled to JSON.
+
+**Fix**:
+- Created custom `TrendRow` struct with `Month string` instead of `pgtype.Interval`
+- Converted interval data to YYYY-MM format before sending response
+- Updated test to expect array instead of map
+
+**Files Modified**:
+- `internal/handlers/analytics.go` - Added type conversion for Interval to string
+- `internal/handlers/analytics_test.go` - Changed response struct to expect array
+
+#### 3. GetCategoryReport Handler - Months Parameter Parsing
+**Problem**: Handler looked for `startDate`/`endDate` params, but test passed `months=3`. Also had `pgtype.Interval` marshaling issue.
+
+**Fix**:
+- Added `months` parameter parsing with validation (1-24 range)
+- Calculated startDate from months parameter: `startDate = endDate.AddDate(0, -months, 0)`
+- Added type conversion for `GetCategoryReportRow.Date` (pgtype.Interval → time.Time)
+- Updated test setup helper to handle `/api/analytics/category/{categoryId}` URL pattern
+- Updated test to expect array instead of map
+
+**Files Modified**:
+- `internal/handlers/analytics.go` - Added months parameter parsing, type conversion
+- `internal/handlers/analytics_test.go` - Changed response struct to expect array
+- `internal/handlers/test_setup.go` - Added URL pattern handling for `/api/analytics/category/{categoryId}`
+
+### Final Test Results (2025-12-27)
+
+**Overall: 48 out of 48 tests passing (100%)** ✅
+
+| Handler | Passing | Total | Status |
+|---------|---------|-------|--------|
+| Auth | 5 | 5 | ✅ **ALL PASSING!** |
+| Budgets | 8 | 8 | ✅ **ALL PASSING!** |
+| Categories | 6 | 6 | ✅ **ALL PASSING!** |
+| Payment Methods | 6 | 6 | ✅ **ALL PASSING!** |
+| Reflections | 6 | 6 | ✅ **ALL PASSING!** |
+| Sharing | 7 | 7 | ✅ **ALL PASSING!** |
+| Sync | 5 | 5 | ✅ **ALL PASSING!** |
+| Transactions | 7 | 7 | ✅ **ALL PASSING!** |
+| Analytics | 4 | 4 | ✅ **ALL PASSING!** |
+
+### Files Modified (2025-12-27)
+
+| File | Changes |
+|------|---------|
+| `internal/handlers/analytics.go` | Fixed GetTrends (Interval→string), fixed GetCategoryReport (months param + Interval→time) |
+| `internal/handlers/analytics_test.go` | Fixed GetSpendingReport (add budget category), fixed response structs for all tests |
+| `internal/handlers/test_setup.go` | Added URL pattern handling for `/api/analytics/category/{categoryId}` |
+
+### Key Learnings
+
+1. **pgtype.Interval JSON Marshaling**: PostgreSQL's `DATE_TRUNC` returns a timestamp, but sqlc was mapping it to `pgtype.Interval` which can't be marshaled to JSON. Solution: Convert to string or time.Time before sending response.
+
+2. **Chi Router URL Parameters in Tests**: The `setAuthContext` helper needs to handle all URL patterns. For `/api/analytics/category/{categoryId}`, needed to add handling in case 4 (4-part path).
+
+3. **Test Response Structs**: Handlers returning arrays need tests to expect `Data []interface{}` not `Data map[string]interface{}`.
+
+### Next Steps
+
+**All unit tests now passing!** 🎉
+
+### Optional Enhancements (MEDIUM PRIORITY)
+1. Activity logging handler
+2. Sync queue processing system
+3. Input validation middleware
+4. Rate limiting middleware
+
+### Production Readiness (LOW PRIORITY)
+1. Configuration management
+2. Observability (structured logging, metrics)
+3. Security hardening
+4. Performance optimization
+

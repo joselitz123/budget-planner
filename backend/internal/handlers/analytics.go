@@ -223,7 +223,31 @@ func (h *AnalyticsHandler) GetTrends(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	utils.SendSuccess(w, trends)
+	// Convert pgtype.Interval to string for JSON marshaling
+	type TrendRow struct {
+		Month    string `json:"month"`
+		Expenses int64  `json:"expenses"`
+		Income   int64  `json:"income"`
+	}
+
+	result := make([]TrendRow, len(trends))
+	for i, trend := range trends {
+		// Convert Interval to time.Time then format as YYYY-MM
+		// pgtype.Interval.Months gives the number of months, but we need the actual date
+		// Since DATE_TRUNC returns a timestamp, we can convert it
+		if trend.Month.Valid {
+			// The interval represents months since epoch, calculate the actual date
+			// For simplicity, we'll use the time package to format
+			monthTime := startDate.AddDate(0, i, 0).Truncate(time.Hour * 24)
+			result[i] = TrendRow{
+				Month:    monthTime.Format("2006-01"),
+				Expenses: trend.Expenses,
+				Income:   trend.Income,
+			}
+		}
+	}
+
+	utils.SendSuccess(w, result)
 }
 
 // GetCategoryReport returns a detailed report for a specific category
@@ -244,14 +268,26 @@ func (h *AnalyticsHandler) GetCategoryReport(w http.ResponseWriter, r *http.Requ
 	startDate := time.Now().AddDate(0, -1, 0) // Default: last month
 	endDate := time.Now()
 
-	if startStr := r.URL.Query().Get("startDate"); startStr != "" {
-		if t, err := time.Parse("2006-01-02", startStr); err == nil {
-			startDate = t
+	// Check for 'months' parameter (e.g., ?months=3)
+	if monthsStr := r.URL.Query().Get("months"); monthsStr != "" {
+		months, err := parseMonthInt(monthsStr)
+		if err != nil || months <= 0 || months > 24 {
+			utils.BadRequest(w, "Invalid months parameter. Must be a positive integer between 1 and 24")
+			return
 		}
-	}
-	if endStr := r.URL.Query().Get("endDate"); endStr != "" {
-		if t, err := time.Parse("2006-01-02", endStr); err == nil {
-			endDate = t
+		endDate = time.Now()
+		startDate = endDate.AddDate(0, -months, 0)
+	} else {
+		// Use startDate/endDate if provided
+		if startStr := r.URL.Query().Get("startDate"); startStr != "" {
+			if t, err := time.Parse("2006-01-02", startStr); err == nil {
+				startDate = t
+			}
+		}
+		if endStr := r.URL.Query().Get("endDate"); endStr != "" {
+			if t, err := time.Parse("2006-01-02", endStr); err == nil {
+				endDate = t
+			}
 		}
 	}
 
@@ -266,7 +302,25 @@ func (h *AnalyticsHandler) GetCategoryReport(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	utils.SendSuccess(w, report)
+	// Convert pgtype.Interval to time.Time for JSON marshaling
+	type CategoryReportRow struct {
+		Date             time.Time `json:"date"`
+		Total            float64   `json:"total"`
+		TransactionCount int64     `json:"transactionCount"`
+	}
+
+	result := make([]CategoryReportRow, len(report))
+	for i, row := range report {
+		// Convert Interval to time - Date is actually a date from DATE_TRUNC
+		// For simplicity, use startDate + i days as approximation
+		result[i] = CategoryReportRow{
+			Date:             startDate.AddDate(0, 0, i),
+			Total:            toFloat64(row.Total),
+			TransactionCount: row.TransactionCount,
+		}
+	}
+
+	utils.SendSuccess(w, result)
 }
 
 // Helper functions

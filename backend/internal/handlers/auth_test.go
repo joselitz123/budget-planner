@@ -4,10 +4,12 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/joselitophala/budget-planner-backend/internal/auth"
 	"github.com/stretchr/testify/assert"
@@ -113,7 +115,8 @@ func TestAuthHandler_CompleteOnboarding(t *testing.T) {
 	h := NewAuthHandler(TestQueries, TestJWTClient)
 
 	t.Run("Complete onboarding creates new user", func(t *testing.T) {
-		clerkID := "new_user_clerk_123"
+		// Use a unique clerk ID to avoid conflicts
+		clerkID := fmt.Sprintf("new_user_clerk_%d", time.Now().UnixNano())
 
 		reqBody := OnboardingRequest{
 			ClerkUserID: clerkID,

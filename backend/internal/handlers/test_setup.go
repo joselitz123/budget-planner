@@ -220,8 +220,23 @@ func setAuthContext(req *http.Request, userID string) {
 	if len(pathParts) >= 1 && pathParts[0] == "api" {
 		switch len(pathParts) {
 		case 3: // /api/{resource}/{id}
-			// Most common pattern: /api/categories/{id}, /api/budgets/{id}, etc.
-			rctx.URLParams.Add("id", pathParts[2])
+			resource := pathParts[1]
+			// Handle special case for reflections and budgets which can use {month} or {id}
+			if resource == "reflections" || resource == "budgets" {
+				// Check if the third part looks like a date (YYYY-MM) or a UUID
+				// Date format: YYYY-MM (7 chars like "2025-01")
+				// UUID format: 36 chars with hyphens
+				if len(pathParts[2]) <= 7 && strings.Contains(pathParts[2], "-") {
+					// This looks like a month parameter (YYYY-MM)
+					rctx.URLParams.Add("month", pathParts[2])
+				} else {
+					// This is a UUID, use id parameter
+					rctx.URLParams.Add("id", pathParts[2])
+				}
+			} else {
+				// Most common pattern: /api/categories/{id}, /api/budgets/{id}, etc.
+				rctx.URLParams.Add("id", pathParts[2])
+			}
 
 		case 4: // /api/{resource}/{sub-resource}/{id-or-value}
 			resource := pathParts[1]
@@ -229,10 +244,33 @@ func setAuthContext(req *http.Request, userID string) {
 			case "analytics":
 				// /api/analytics/dashboard/{month}
 				// /api/analytics/spending/{month}
-				rctx.URLParams.Add("month", pathParts[3])
-			case "shares":
+				// /api/analytics/category/{categoryId}
+				if pathParts[2] == "category" {
+					rctx.URLParams.Add("categoryId", pathParts[3])
+				} else {
+					rctx.URLParams.Add("month", pathParts[3])
+				}
+			case "budgets":
+				// /api/budgets/{id}/categories
+				if pathParts[3] == "categories" {
+					rctx.URLParams.Add("id", pathParts[2])
+				}
+			case "shares", "sharing":
 				// /api/shares/invitations/{id}
-				rctx.URLParams.Add("id", pathParts[3])
+				// /api/sharing/budgets/{budgetId}
+				// /api/sharing/access/{id}
+				if pathParts[2] == "budgets" {
+					rctx.URLParams.Add("budgetId", pathParts[3])
+				} else if pathParts[2] == "access" {
+					rctx.URLParams.Add("id", pathParts[3])
+				} else {
+					rctx.URLParams.Add("id", pathParts[3])
+				}
+			case "reflections":
+				// /api/reflections/month/{month}
+				if pathParts[2] == "month" {
+					rctx.URLParams.Add("month", pathParts[3])
+				}
 			case "payment-methods":
 				// This should be length 3, but handle if tests use different pattern
 				rctx.URLParams.Add("id", pathParts[3])
