@@ -14,7 +14,29 @@ This file provides comprehensive guidance for Claude Code when working with the 
 - IndexedDB (via `idb` library) - Offline storage
 - Clerk - Authentication
 
-**Current Status:** Initial setup complete (package.json configured), ready for development
+**Current Status:** Core pages implemented (~60% complete). See [**todo.md**](./todo.md) for detailed status.
+
+---
+
+## Implementation Progress
+
+**Completed (Iteration 1):**
+- ✅ SvelteKit 2.0 project scaffolding
+- ✅ Vite 5.0 configuration with PWA plugin
+- ✅ TypeScript 5.0 strict mode
+- ✅ Tailwind CSS 3.4 with custom notebook theme (colors, fonts, backgrounds)
+- ✅ PWA manifest and service worker configuration
+- ✅ IndexedDB client with full CRUD operations
+- ✅ Svelte stores for state management
+- ✅ API client with error handling
+- ✅ Root layout with navigation and theme toggle
+- ✅ Budget Overview page with monthly reflection
+- ✅ Expense Tracker page with transaction list
+- ✅ Bill Payment page with status tracking
+- ✅ Type checking: 0 errors, 0 warnings
+- ✅ Build successful
+
+**See `todo.md` for detailed remaining tasks and next steps.**
 
 ---
 
@@ -49,52 +71,55 @@ npm run pwa:generate-icons
 
 ---
 
+## Important Files
+
+- `starting-point.md` (root) - Full project specification with database schema, API endpoints, and workflows
+- **[todo.md](./todo.md)** - **⭐ Implementation status and remaining tasks - START HERE**
+- `backend/CLAUDE.md` - Backend development guide with architecture patterns, testing, and type conversions
+- `ui-page-inspiration.md` - UI design inspiration with HTML/CSS examples for notebook aesthetic
+
+---
+
 ## Project Structure
 
-**Expected Structure** (to be implemented):
+**Current Structure** (✅ = implemented, ❌ = planned):
 
 ```
 frontend/
 ├── src/
-│   ├── lib/                   # Utility functions, API clients
-│   │   ├── components/        # Shared UI components
-│   │   ├── stores/            # Svelte stores for state management
-│   │   ├── db/                # IndexedDB client setup
-│   │   ├── api/               # API client functions
-│   │   └── utils/             # Helper functions
-│   ├── routes/                # SvelteKit file-based routing
-│   │   +layout.svelte         # Root layout with navigation
-│   │   +page.svelte           # Home page
-│   │   +error.svelte          # Error page
-│   │   /auth/                 # Authentication routes
-│   │   │   +layout.svelte     # Auth layout
-│   │   │   /sign-in/          # Clerk sign-in
-│   │   │   /sign-up/          # Clerk sign-up
-│   │   /dashboard/            # Main dashboard
-│   │   │   +page.svelte       # Dashboard overview
-│   │   /budgets/              # Budget management
-│   │   │   +page.svelte       # Budgets list
-│   │   │   /[id]/             # Budget details
-│   │   /transactions/         # Transaction tracking
-│   │   │   +page.svelte       # Transactions list
-│   │   │   /new/              # Add transaction
-│   │   /categories/          # Category management
-│   │   /analytics/            # Analytics and insights
-│   │   /settings/             # User settings
-│   │   └ /shares/             # Budget sharing
-│   └── app.html               # HTML template with PWA meta tags
-├── static/                     # Static assets
-│   ├── logo.png               # App logo
-│   ├── icons/                 # PWA icons (generated)
-│   ├── favicon.ico            # Favicon
-│   └── manifest.json          # PWA manifest
-├── .env                       # Environment variables
-├── svelte.config.js           # SvelteKit configuration
-├── vite.config.js            # Vite configuration
-├── tailwind.config.js        # Tailwind CSS configuration
-├── tsconfig.json             # TypeScript configuration
-├── postcss.config.js         # PostCSS configuration
-└── package.json              # Dependencies and scripts
+│   ├── lib/
+│   │   ├── components/        # ❌ Shared UI components (planned)
+│   │   ├── stores/            # ✅ Svelte stores for state management
+│   │   ├── db/                # ✅ IndexedDB client setup
+│   │   ├── api/               # ✅ API client functions
+│   │   └── utils/             # ✅ Helper functions
+│   ├── routes/                # ✅ SvelteKit file-based routing
+│   │   ├── +layout.svelte      # ✅ Root layout with navigation
+│   │   ├── +page.svelte        # ✅ Budget Overview page
+│   │   ├── +error.svelte       # ❌ Error page (planned)
+│   │   ├── transactions/
+│   │   │   └── +page.svelte   # ✅ Expense Tracker page
+│   │   ├── bills/
+│   │   │   └── +page.svelte   # ✅ Bill Payment page
+│   │   ├── settings/          # ❌ User settings (planned)
+│   │   ├── categories/        # ❌ Category management (planned)
+│   │   ├── analytics/         # ❌ Analytics (planned)
+│   │   └── auth/              # ❌ Authentication routes (planned)
+│   └── app.html               # ✅ HTML template with PWA meta tags
+├── static/
+│   ├── icons/                 # ⚠️  PWA icons (placeholder, needs generation)
+│   ├── favicon.ico            # ⚠️  Needs creation
+│   └── manifest.json          # ✅ PWA manifest
+├── .env                       # ✅ Environment variables
+├── .env.example              # ✅ Environment template
+├── svelte.config.js          # ✅ SvelteKit configuration
+├── vite.config.ts            # ✅ Vite configuration
+├── tailwind.config.js        # ✅ Tailwind CSS configuration
+├── tsconfig.json             # ✅ TypeScript configuration
+├── postcss.config.js         # ✅ PostCSS configuration
+├── package.json              # ✅ Dependencies
+├── todo.md                   # ✅ Implementation status & TODO
+└── CLAUDE.md                 # ✅ This file
 ```
 
 ---

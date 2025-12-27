@@ -1,0 +1,3 @@
+# TODO: Generate PWA icons (192x192 and 512x512)
+# Run: npm run pwa:generate-icons
+# Requires: static/logo.png as source

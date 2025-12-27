@@ -1,0 +1,88 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Notebook aesthetic styles */
+
+/* Notebook lines background */
+.notebook-lines {
+	background-image: linear-gradient(#e5e7eb 1px, transparent 1px);
+	background-size: 100% 2rem;
+}
+
+.dark .notebook-lines {
+	background-image: linear-gradient(#374151 1px, transparent 1px);
+}
+
+/* Spiral binding component styles */
+.binding-holes {
+	position: absolute;
+	left: 12px;
+	top: 0;
+	bottom: 0;
+	width: 20px;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-evenly;
+	z-index: 10;
+}
+
+.binding-hole {
+	width: 12px;
+	height: 12px;
+	background-color: #f3f4f6;
+	border-radius: 50%;
+	box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.2);
+	position: relative;
+}
+
+.dark .binding-hole {
+	background-color: #374151;
+	box-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.binding-coil {
+	position: absolute;
+	left: -4px;
+	top: 50%;
+	transform: translateY(-50%);
+	width: 24px;
+	height: 8px;
+	background: linear-gradient(90deg, #b8860b, #ffd700, #b8860b);
+	border-radius: 4px;
+	box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+	z-index: 20;
+}
+
+/* Scrollbar customization */
+.no-scrollbar::-webkit-scrollbar {
+	display: none;
+}
+
+.no-scrollbar {
+	-ms-overflow-style: none;
+	scrollbar-width: none;
+}
+
+/* Custom scrollbar for themed containers */
+.custom-scrollbar::-webkit-scrollbar {
+	width: 8px;
+	height: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+	background: #f1f1f1;
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-track {
+	background: #374151;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+	background: #d4af37;
+	border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+	background: #b8860b;
+}
