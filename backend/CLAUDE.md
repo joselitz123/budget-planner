@@ -19,7 +19,6 @@ This file provides comprehensive guidance for Claude Code when working with the 
 ## Quick Commands
 
 ```bash
-# Navigate to backend directory
 cd /workspace/budget-planner/backend
 
 # Run with hot reload (Air)
@@ -39,9 +38,171 @@ DATABASE_URL="postgresql://budgetuser:budgetpass@localhost:5432/budgetdb?sslmode
 
 # Run specific test
 DATABASE_URL="postgresql://budgetuser:budgetpass@localhost:5432/budgetdb?sslmode=disable" go test ./internal/handlers/auth_test.go -v
+```
+
+---
+
+## Architecture Patterns
+
+### sqlc Query Generation
+
+**Pattern:** SQL queries are written in `.sql` files, then Go code is generated.
+
+```sql
+-- sql/queries/users.sql
+-- name: GetUserByID :one
+SELECT id, email, name FROM users WHERE id = $1;
+```
+
+```bash
+/home/vscode/go/bin/sqlc generate
+# Generates: internal/models/users.sql.go with GetUserByID() function
+```
+
+**Query Naming Convention:**
+- `:one` - Returns single row
+- `:many` - Returns multiple rows
+- `:exec` - Executes without returning data
+- `:execrows` - Executes and returns rows affected
+
+**Always prefer using sqlc-generated queries over raw SQL in handlers.**
+
+### Database Schema Conventions
+
+All tables follow these conventions:
+```sql
+id UUID PRIMARY KEY DEFAULT gen_random_uuid()
+user_id UUID REFERENCES users(id) ON DELETE CASCADE
+created_at TIMESTAMPTZ DEFAULT NOW()
+updated_at TIMESTAMPTZ DEFAULT NOW()
+deleted BOOLEAN DEFAULT FALSE
+```
+
+### Type Conversion Patterns (pgtype ↔ Go)
+
+The backend uses `pgtype` types from `github.com/jackc/pgx/v5/pgtype`. **Always use helpers from `internal/utils/types.go`:**
+
+```go
+// Go → pgtype (for database operations)
+utils.PgUUID("user-id-123")
+utils.PgText("user name")
+utils.PgNumeric(123.45)
+utils.PgDate(time.Now())
+utils.PgBool(true)
+
+// pgtype → Go (from database results)
+utils.UUIDToString(uuidValue)   // pgtype.UUID → string
+utils.TextToString(textValue)   // pgtype.Text → string
+utils.NumericToFloat64(numericValue) // pgtype.Numeric → float64
+```
+
+**Important:** Some sqlc-generated model fields use plain Go types, not pgtype:
+- `CreatePaymentMethodParams.Name` is `string`, not `pgtype.Text`
+- `CreatePaymentMethodParams.Type` is `string`, not `pgtype.Text`
+
+### Chi Router Path Parameter Handling
+
+**CRITICAL:** All handlers must use `chi.URLParam(r, "paramName")` to extract path values:
+
+```go
+// ✅ Correct
+id := chi.URLParam(r, "id")
+
+// ❌ Wrong - returns empty in tests without Chi context
+id := r.PathValue("id")
+```
+
+---
+
+## Handler Reference
+
+All 10 handlers are implemented and tested (48/48 tests passing):
+
+| # | Handler | Endpoints | Purpose |
+|---|---------|-----------|---------|
+| 1 | Auth | `POST /api/auth/login`, `POST /api/auth/logout`, `POST /api/auth/onboarding`, `GET /api/auth/me` | Authentication and user onboarding |
+| 2 | Users | `GET /api/users/me`, `PUT /api/users/me`, `DELETE /api/users/me` | User profile management |
+| 3 | Categories | `GET /api/categories`, `GET /api/categories/system`, `POST /api/categories`, `PUT /api/categories/{id}`, `DELETE /api/categories/{id}` | Category CRUD |
+| 4 | Budgets | `GET /api/budgets`, `GET /api/budgets/{month}`, `GET /api/budgets/id/{id}`, `POST /api/budgets`, `PUT /api/budgets/{id}`, `DELETE /api/budgets/{id}`, `GET /api/budgets/{id}/categories`, `POST /api/budgets/{id}/categories` | Budget management |
+| 5 | Transactions | `GET /api/transactions`, `GET /api/transactions/{id}`, `POST /api/transactions`, `PUT /api/transactions/{id}`, `DELETE /api/transactions/{id}`, `GET /api/budgets/{budgetId}/transactions` | Transaction CRUD |
+| 6 | Payment Methods | `GET /api/payment-methods`, `GET /api/payment-methods/{id}`, `POST /api/payment-methods`, `PUT /api/payment-methods/{id}`, `DELETE /api/payment-methods/{id}` | Payment method CRUD |
+| 7 | Sync | `POST /api/sync/push`, `POST /api/sync/pull`, `GET /api/sync/status`, `POST /api/sync/resolve-conflict`, `GET /api/sync/conflict-history` | Offline sync operations |
+| 8 | Reflections | `GET /api/reflections/month/{month}`, `POST /api/reflections`, `PUT /api/reflections/{id}`, `DELETE /api/reflections/{id}`, `GET /api/reflections/templates` | Monthly reflections |
+| 9 | Sharing | `POST /api/sharing/invitations`, `GET /api/sharing/invitations`, `POST /api/sharing/invitations/{id}/respond`, `GET /api/sharing/budgets/{budgetId}`, `GET /api/sharing/access/{budgetId}`, `DELETE /api/sharing/access/{id}`, `DELETE /api/sharing/invitations/{id}` | Budget sharing |
+| 10 | Analytics | `GET /api/analytics/dashboard/{month}`, `GET /api/analytics/spending/{month}`, `GET /api/analytics/trends`, `GET /api/analytics/category/{categoryId}` | Reports and analytics |
+
+---
+
+## Testing Guide
+
+### Test Infrastructure
+
+Tests use `internal/handlers/test_setup.go` which provides:
+
+**Helper Functions:**
+- `CreateTestUser(t, ctx)` - Creates a test user with unique ID
+- `CreateTestBudget(t, ctx, userID, "2025-01-01", 5000)` - Creates a test budget
+- `CreateTestCategory(t, ctx, userID, "Food", "🍔", "#FF5733")` - Creates a test category
+- `CreateTestPaymentMethod(t, ctx, userID, "Cash", "cash")` - Creates a test payment method
+- `CleanupTestUser(t, ctx, userID)` - Soft-deletes test user (cascades to related records)
+- `setAuthContext(req, userID)` - Sets authenticated user + Chi router context
+- `GenerateTestToken(t, clerkUserID)` - Creates a valid JWT for testing
+
+### Running Tests
+
+```bash
+# Run all handler tests
+DATABASE_URL="postgresql://budgetuser:budgetpass@localhost:5432/budgetdb?sslmode=disable" go test ./internal/handlers/ -v
+
+# Run specific test file
+DATABASE_URL="postgresql://budgetuser:budgetpass@localhost:5432/budgetdb?sslmode=disable" go test ./internal/handlers/auth_test.go -v
 
 # Run with coverage
 DATABASE_URL="postgresql://budgetuser:budgetpass@localhost:5432/budgetdb?sslmode=disable" go test ./... -cover
+```
+
+### Test Status
+
+**Overall: 48 out of 48 tests passing (100%)** ✅
+
+| Handler | Passing | Total | Status |
+|---------|---------|-------|--------|
+| Auth | 5 | 5 | ✅ All passing |
+| Budgets | 8 | 8 | ✅ All passing |
+| Categories | 6 | 6 | ✅ All passing |
+| Payment Methods | 6 | 6 | ✅ All passing |
+| Reflections | 6 | 6 | ✅ All passing |
+| Sharing | 7 | 7 | ✅ All passing |
+| Sync | 5 | 5 | ✅ All passing |
+| Transactions | 7 | 7 | ✅ All passing |
+| Analytics | 4 | 4 | ✅ All passing |
+
+**See `internal/utils/types.go` for complete type conversion helper list.**
+
+---
+
+## Development Workflow
+
+### Hot Reload with Air
+
+- Backend uses Air (configured in `.air.toml`)
+- Watches `.go` and `.sql` files
+- Automatically rebuilds and restarts on changes
+- `sqlc generate` is manual - run after modifying `.sql` files
+
+### Database Migrations
+
+```bash
+# Run migrations
+migrate -path sql/schema -database "$DATABASE_URL" up
+
+# Rollback migrations
+migrate -path sql/schema -database "$DATABASE_URL" down
+
+# Create new migration (numbered sequence)
+# 1. Create sql/schema/002_<name>.up.sql
+# 2. Create sql/schema/002_<name>.down.sql
+# 3. Test both up and down
 ```
 
 ---
@@ -89,308 +250,14 @@ backend/
 
 ---
 
-## Architecture Patterns
-
-### sqlc Query Generation Workflow
-
-**Key Pattern:** SQL queries are written in `.sql` files, then Go code is generated.
-
-1. Write SQL query in `sql/queries/<domain>.sql`:
-```sql
--- name: GetUserByID :one
-SELECT id, email, name FROM users WHERE id = $1;
-```
-
-2. Run `sqlc generate` to create Go code in `internal/models/`
-
-3. Use generated functions in handlers:
-```go
-user, err := h.queries.GetUserByID(ctx, userID)
-```
-
-**Query Naming Convention:**
-- `:one` - Returns single row
-- `:many` - Returns multiple rows
-- `:exec` - Executes without returning data
-- `:execrows` - Executes and returns rows affected
-
-**Always prefer using sqlc-generated queries over raw SQL in handlers.**
-
-### Database Schema Conventions
-
-All tables follow these conventions:
-- `id UUID PRIMARY KEY DEFAULT gen_random_uuid()` - UUID primary keys
-- `user_id UUID REFERENCES users(id) ON DELETE CASCADE` - User ownership
-- `created_at TIMESTAMPTZ DEFAULT NOW()` - Audit timestamps
-- `updated_at TIMESTAMPTZ DEFAULT NOW()` - Audit timestamps
-- `deleted BOOLEAN DEFAULT FALSE` - Soft deletes (never hard delete)
-
-### Type Conversion Patterns (pgtype ↔ Go)
-
-The backend uses `pgtype` types from `github.com/jackc/pgx/v5/pgtype`. Always use helpers from `internal/utils/types.go`:
-
-**Common Pattern:**
-```go
-// Go → pgtype (for database operations)
-utils.PgUUID("user-id-123")
-utils.PgText("user name")
-utils.PgNumeric(123.45)
-utils.PgDate(time.Now())
-utils.PgBool(true)
-
-// pgtype → Go (from database results)
-utils.UUIDToString(uuidValue)   // pgtype.UUID → string
-utils.TextToString(textValue)   // pgtype.Text → string
-utils.NumericToFloat64(numericValue) // pgtype.Numeric → float64
-```
-
-**IMPORTANT:** Some sqlc-generated model fields use plain Go types, not pgtype:
-- `CreatePaymentMethodParams.Name` is `string`, not `pgtype.Text`
-- `CreatePaymentMethodParams.Type` is `string`, not `pgtype.Text`
-- `CreateShareInvitationParams.RecipientEmail` is `string`, not `pgtype.Text`
-- `CreateShareInvitationParams.Permission` is `string`, not `pgtype.Text`
-
-### Chi Router Path Parameter Handling
-
-All handlers use `chi.URLParam(r, "paramName")` to extract path values:
-
-```go
-// ✅ Correct
-id := chi.URLParam(r, "id")
-
-// ❌ Wrong - returns empty in tests without Chi context
-id := r.PathValue("id")
-```
-
----
-
-## Handler Reference
-
-All 10 handlers are implemented and tested (48/48 tests passing):
-
-| # | Handler | File | Endpoints | Purpose |
-|---|---------|------|-----------|---------|
-| 1 | Auth | `auth.go` | `POST /api/auth/login`, `POST /api/auth/logout`, `POST /api/auth/onboarding`, `GET /api/auth/me` | Authentication and user onboarding |
-| 2 | Users | `users.go` | `GET /api/users/me`, `PUT /api/users/me`, `DELETE /api/users/me` | User profile management |
-| 3 | Categories | `categories.go` | `GET /api/categories`, `GET /api/categories/system`, `POST /api/categories`, `PUT /api/categories/{id}`, `DELETE /api/categories/{id}` | Category CRUD |
-| 4 | Budgets | `budgets.go` | `GET /api/budgets`, `GET /api/budgets/{month}`, `GET /api/budgets/id/{id}`, `POST /api/budgets`, `PUT /api/budgets/{id}`, `DELETE /api/budgets/{id}`, `GET /api/budgets/{id}/categories`, `POST /api/budgets/{id}/categories` | Budget management |
-| 5 | Transactions | `transactions.go` | `GET /api/transactions`, `GET /api/transactions/{id}`, `POST /api/transactions`, `PUT /api/transactions/{id}`, `DELETE /api/transactions/{id}`, `GET /api/budgets/{budgetId}/transactions` | Transaction CRUD |
-| 6 | Payment Methods | `payment_methods.go` | `GET /api/payment-methods`, `GET /api/payment-methods/{id}`, `POST /api/payment-methods`, `PUT /api/payment-methods/{id}`, `DELETE /api/payment-methods/{id}` | Payment method CRUD |
-| 7 | Sync | `sync.go` | `POST /api/sync/push`, `POST /api/sync/pull`, `GET /api/sync/status`, `POST /api/sync/resolve-conflict`, `GET /api/sync/conflict-history` | Offline sync operations |
-| 8 | Reflections | `reflections.go` | `GET /api/reflections/month/{month}`, `POST /api/reflections`, `PUT /api/reflections/{id}`, `DELETE /api/reflections/{id}`, `GET /api/reflections/templates` | Monthly reflections |
-| 9 | Sharing | `sharing.go` | `POST /api/sharing/invitations`, `GET /api/sharing/invitations`, `POST /api/sharing/invitations/{id}/respond`, `GET /api/sharing/budgets/{budgetId}`, `GET /api/sharing/access/{budgetId}`, `DELETE /api/sharing/access/{id}`, `DELETE /api/sharing/invitations/{id}` | Budget sharing |
-| 10 | Analytics | `analytics.go` | `GET /api/analytics/dashboard/{month}`, `GET /api/analytics/spending/{month}`, `GET /api/analytics/trends`, `GET /api/analytics/category/{categoryId}` | Reports and analytics |
-
----
-
-## Testing Guide
-
-### Test Infrastructure
-
-Tests use `internal/handlers/test_setup.go` which provides:
-
-**Helper Functions:**
-- `CreateTestUser(t, ctx)` - Creates a test user with unique ID (using timestamp + test name)
-- `CreateTestBudget(t, ctx, userID, "2025-01-01", 5000)` - Creates a test budget
-- `CreateTestCategory(t, ctx, userID, "Food", "🍔", "#FF5733")` - Creates a test category
-- `CreateTestPaymentMethod(t, ctx, userID, "Cash", "cash")` - Creates a test payment method
-- `CleanupTestUser(t, ctx, userID)` - Soft-deletes test user (cascades to related records)
-- `setAuthContext(req, userID)` - Sets authenticated user + Chi router context
-- `GenerateTestToken(t, clerkUserID)` - Creates a valid JWT for testing
-
-### Running Tests
-
-```bash
-# Run all handler tests
-DATABASE_URL="postgresql://budgetuser:budgetpass@localhost:5432/budgetdb?sslmode=disable" go test ./internal/handlers/ -v
-
-# Run specific test file
-DATABASE_URL="postgresql://budgetuser:budgetpass@localhost:5432/budgetdb?sslmode=disable" go test ./internal/handlers/auth_test.go -v
-
-# Run with coverage
-DATABASE_URL="postgresql://budgetuser:budgetpass@localhost:5432/budgetdb?sslmode=disable" go test ./... -cover
-```
-
-### Type Conversions for Tests
-
-When writing tests, use helpers from `internal/utils/types.go`:
-
-```go
-// String → pgtype.UUID
-utils.PgUUID("user-id-123")
-
-// time.Time → pgtype.Date (for budgets)
-parsedTime, _ := time.Parse("2006-01-02", "2025-01-01")
-utils.PgDate(parsedTime)
-
-// float64 → pgtype.Numeric (for amounts, limits)
-utils.PgNumeric(5000.00)
-
-// string → pgtype.Text
-utils.PgText("value")       // for required text
-utils.PgTextPtr(&strPtr)    // for optional text pointers
-
-// bool → pgtype.Bool
-utils.PgBool(true)
-utils.PgBoolPtr(&boolPtr)
-
-// int32 → pgtype.Int4 (for ratings)
-utils.PgInt4(5)
-```
-
-### Chi Router Context in Tests
-
-**Critical:** Tests must use `setAuthContext()` to set up Chi router context:
-
-```go
-// ✅ Correct test setup
-req := httptest.NewRequest("PUT", "/api/categories/123", body)
-setAuthContext(req, userID)  // Sets up both auth + Chi context
-w := httptest.NewRecorder()
-
-h.UpdateCategory(w, req)  // chi.URLParam(r, "id") now works
-```
-
-The `setAuthContext()` helper automatically parses URLs like:
-- `/api/categories/{id}` → adds "id" parameter
-- `/api/budgets/{id}` → adds "id" parameter
-- `/api/analytics/dashboard/{month}` → adds "month" parameter
-- `/api/budgets/{budgetId}/categories/{categoryId}` → adds both parameters
-- `/api/analytics/category/{categoryId}` → adds "categoryId" parameter
-- `/api/shares/invitations/{id}` → adds "id" parameter
-
-### Current Test Status
-
-**Overall: 48 out of 48 tests passing (100%)** ✅ (as of 2025-12-27)
-
-| Handler | Passing | Total | Status |
-|---------|---------|-------|--------|
-| Auth | 5 | 5 | ✅ All passing |
-| Budgets | 8 | 8 | ✅ All passing |
-| Categories | 6 | 6 | ✅ All passing |
-| Payment Methods | 6 | 6 | ✅ All passing |
-| Reflections | 6 | 6 | ✅ All passing |
-| Sharing | 7 | 7 | ✅ All passing |
-| Sync | 5 | 5 | ✅ All passing |
-| Transactions | 7 | 7 | ✅ All passing |
-| Analytics | 4 | 4 | ✅ All passing |
-
----
-
-## Type Conversion Cheat Sheet
-
-All helpers in `internal/utils/types.go`:
-
-```go
-// UUID conversions
-utils.PgUUID(string)              → pgtype.UUID
-utils.PgUUIDPtr(*string)          → pgtype.UUID
-utils.UUIDToString(pgtype.UUID)   → string
-
-// Text conversions
-utils.PgText(string)              → pgtype.Text
-utils.PgTextPtr(*string)          → pgtype.Text
-utils.TextToString(pgtype.Text)   → string
-utils.TextToStringPtr(pgtype.Text) → *string
-
-// Numeric conversions
-utils.PgNumeric(float64)          → pgtype.Numeric
-utils.PgNumericPtr(*float64)      → pgtype.Numeric
-utils.NumericToFloat64(pgtype.Numeric) → float64
-utils.NumericToFloat64Ptr(pgtype.Numeric) → *float64
-
-// Date/Time conversions
-utils.PgDate(interface{})         → pgtype.Date
-utils.PgDatePtr(*time.Time)       → pgtype.Date
-utils.DateToTime(pgtype.Date)     → time.Time
-utils.PgTimestamptz(time.Time)    → pgtype.Timestamptz
-utils.TimestamptzToTime(pgtype.Timestamptz) → time.Time
-
-// Bool conversions
-utils.PgBool(bool)                → pgtype.Bool
-utils.PgBoolPtr(*bool)            → pgtype.Bool
-
-// Int4 conversions
-utils.PgInt4(int32)               → pgtype.Int4
-utils.PgInt4Ptr(*int32)           → pgtype.Int4
-utils.Int4ToInt32(pgtype.Int4)    → *int32
-```
-
-**Common Gotchas:**
-1. **UUID String Format**: `utils.UUIDToString()` returns proper UUID format (e.g., "550e8400-e29b-41d4-a716-446655440000"), not lowercase hex
-2. **Plain Go Types**: Some sqlc params use plain `string` instead of `pgtype.Text` (check generated code!)
-3. **pgtype.Interval JSON Marshaling**: Cannot marshal to JSON directly - convert to `string` or `time.Time` first
-
----
-
-## Development Workflow
-
-### sqlc Generate Workflow
-
-1. Write SQL queries in `sql/queries/*.sql`
-2. Run `/home/vscode/go/bin/sqlc generate`
-3. Generated code appears in `internal/models/*.sql.go`
-4. Use generated queries in handlers
-
-### Hot Reload with Air
-
-- Backend uses Air (configured in `.air.toml`)
-- Watches `.go` and `.sql` files
-- Automatically rebuilds and restarts on changes
-- `sqlc generate` is manual - run after modifying `.sql` files
-
-### Database Migrations
-
-```bash
-# Run migrations
-migrate -path sql/schema -database "$DATABASE_URL" up
-
-# Rollback migrations
-migrate -path sql/schema -database "$DATABASE_URL" down
-
-# Create new migration (numbered sequence)
-# 1. Create sql/schema/002_<name>.up.sql
-# 2. Create sql/schema/002_<name>.down.sql
-# 3. Test both up and down
-```
-
-### Common Debugging Patterns
-
-1. **UUID comparison issues**: Ensure you're using `utils.UUIDToString()` for consistent UUID format
-2. **Chi path parameters**: Use `chi.URLParam(r, "param")` not `r.PathValue("param")`
-3. **Test setup**: Always call `setAuthContext(req, userID)` in tests
-4. **pgtype JSON marshaling**: Convert `pgtype.Interval` to `string` or `time.Time` before sending response
-5. **Type mismatches**: Check if sqlc generated plain Go types vs pgtype types
-
----
-
-## Session History Summary
-
-### Completed Work
-
-**Session 1-3:** Initial setup, schema definition, handler scaffolding
-**Iteration/1 (2025-01-24):** Database setup, server testing, unit test infrastructure (49 tests created)
-**Iteration/1 (2025-12-24):** Fixed Chi router path parameter extraction (34/48 tests passing)
-**Iteration/1 (2025-12-25):** Fixed UUID conversion, URL patterns, SQL queries (45/48 tests passing)
-**Iteration/1 (2025-12-27):** Fixed final 3 analytics tests - **100% test coverage achieved! (48/48)** ✅
-
-### Key Achievements
-- All 10 handlers implemented and tested
-- Fixed UUID string conversion bug
-- Fixed Chi router path parameter extraction
-- Fixed pgtype.Interval JSON marshaling
-- Added months parameter parsing for analytics
-- All type conversions working correctly
-
-**See `TASK.md` for detailed session history and development task log.**
-
----
-
 ## Important Files
 
-- `TASK.md` - Development task log with session history
+- `todo.md` - Implementation status and session history (renamed from TASK.md)
 - `starting-point.md` (root) - Full project specification
 - `CLAUDE.md` (root) - Project-level documentation
+- `internal/handlers/*.go` - All 10 handlers
+- `internal/utils/types.go` - Type conversion helpers
+- `internal/handlers/test_setup.go` - Test infrastructure
 
 ---
 
@@ -398,14 +265,14 @@ migrate -path sql/schema -database "$DATABASE_URL" down
 
 Required environment variables (`.env`):
 
-```
+```bash
 DATABASE_URL=postgresql://budgetuser:budgetpass@localhost:5432/budgetdb?sslmode=disable
 PORT=8080
 JWT_SECRET=dev-secret-key-change-in-production
 ```
 
 For Clerk authentication in development:
-```
+```bash
 CLERK_SECRET_KEY=your_clerk_secret_key
 CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
 ```

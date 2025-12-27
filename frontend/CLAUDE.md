@@ -14,36 +14,14 @@ This file provides comprehensive guidance for Claude Code when working with the 
 - IndexedDB (via `idb` library) - Offline storage
 - Clerk - Authentication
 
-**Current Status:** Core pages implemented (~60% complete). See [**todo.md**](./todo.md) for detailed status.
-
----
-
-## Implementation Progress
-
-**Completed (Iteration 1):**
-- ✅ SvelteKit 2.0 project scaffolding
-- ✅ Vite 5.0 configuration with PWA plugin
-- ✅ TypeScript 5.0 strict mode
-- ✅ Tailwind CSS 3.4 with custom notebook theme (colors, fonts, backgrounds)
-- ✅ PWA manifest and service worker configuration
-- ✅ IndexedDB client with full CRUD operations
-- ✅ Svelte stores for state management
-- ✅ API client with error handling
-- ✅ Root layout with navigation and theme toggle
-- ✅ Budget Overview page with monthly reflection
-- ✅ Expense Tracker page with transaction list
-- ✅ Bill Payment page with status tracking
-- ✅ Type checking: 0 errors, 0 warnings
-- ✅ Build successful
-
-**See `todo.md` for detailed remaining tasks and next steps.**
+**Current Status:** ~75% complete - See `todo.md` for detailed implementation status
 
 ---
 
 ## Quick Commands
 
 ```bash
-cd frontend
+cd /workspace/budget-planner/frontend
 
 # Install dependencies
 npm install
@@ -71,56 +49,64 @@ npm run pwa:generate-icons
 
 ---
 
-## Important Files
+## Tech Stack
 
-- `starting-point.md` (root) - Full project specification with database schema, API endpoints, and workflows
-- **[todo.md](./todo.md)** - **⭐ Implementation status and remaining tasks - START HERE**
-- `backend/CLAUDE.md` - Backend development guide with architecture patterns, testing, and type conversions
-- `ui-page-inspiration.md` - UI design inspiration with HTML/CSS examples for notebook aesthetic
+**Core Framework:**
+- `svelte@^5.0.0` - Reactive UI framework with runes
+- `@sveltejs/kit@^2.0.0` - Full-stack web framework
+- `vite@^5.0.0` - Build tool and dev server
+- `typescript@^5.0.0` - Type safety
+
+**UI & Styling:**
+- `@tailwindcss/forms@^0.5.9` - Form styling plugins
+- `tailwindcss@^3.4.10` - Utility-first CSS
+- `class-variance-authority@^0.7.0` - Component variants
+- `lucide-svelte@^0.469.0` - Icon library
+
+**Offline Storage:**
+- `idb@^8.0.0` - IndexedDB wrapper
+- `workbox-window@^7.1.0` - Service worker management
+
+**Authentication:**
+- `@clerk/sveltekit@^2.0.0` - Clerk authentication
+
+**Development Tools:**
+- `@sveltejs/vite-plugin-svelte@^3.0.0` - Svelte plugin for Vite
+- `svelte-check@^3.0.0` - Type checking
+- `vite-plugin-pwa@^0.20.0` - PWA support
+- `prettier@^3.0.0` - Code formatting
+
+**See `package.json` for complete dependency list.**
 
 ---
 
-## Project Structure
+## Implementation Status
 
-**Current Structure** (✅ = implemented, ❌ = planned):
+**Completed (Iteration 1):**
+- ✅ SvelteKit 2.0 project scaffolding
+- ✅ Vite 5.0 configuration with PWA plugin
+- ✅ TypeScript 5.0 strict mode
+- ✅ Tailwind CSS 3.4 with custom notebook theme
+- ✅ PWA manifest and service worker configuration
+- ✅ IndexedDB client with full CRUD operations
+- ✅ Svelte stores for state management
+- ✅ API client with error handling
+- ✅ Root layout with navigation and theme toggle
+- ✅ Budget Overview page with monthly reflection
+- ✅ Expense Tracker page with transaction list
+- ✅ Bill Payment page with status tracking
+- ✅ Transaction Modal with form validation
+- ✅ Type checking: 0 errors, 0 warnings
+- ✅ Build successful
 
-```
-frontend/
-├── src/
-│   ├── lib/
-│   │   ├── components/        # ❌ Shared UI components (planned)
-│   │   ├── stores/            # ✅ Svelte stores for state management
-│   │   ├── db/                # ✅ IndexedDB client setup
-│   │   ├── api/               # ✅ API client functions
-│   │   └── utils/             # ✅ Helper functions
-│   ├── routes/                # ✅ SvelteKit file-based routing
-│   │   ├── +layout.svelte      # ✅ Root layout with navigation
-│   │   ├── +page.svelte        # ✅ Budget Overview page
-│   │   ├── +error.svelte       # ❌ Error page (planned)
-│   │   ├── transactions/
-│   │   │   └── +page.svelte   # ✅ Expense Tracker page
-│   │   ├── bills/
-│   │   │   └── +page.svelte   # ✅ Bill Payment page
-│   │   ├── settings/          # ❌ User settings (planned)
-│   │   ├── categories/        # ❌ Category management (planned)
-│   │   ├── analytics/         # ❌ Analytics (planned)
-│   │   └── auth/              # ❌ Authentication routes (planned)
-│   └── app.html               # ✅ HTML template with PWA meta tags
-├── static/
-│   ├── icons/                 # ⚠️  PWA icons (placeholder, needs generation)
-│   ├── favicon.ico            # ⚠️  Needs creation
-│   └── manifest.json          # ✅ PWA manifest
-├── .env                       # ✅ Environment variables
-├── .env.example              # ✅ Environment template
-├── svelte.config.js          # ✅ SvelteKit configuration
-├── vite.config.ts            # ✅ Vite configuration
-├── tailwind.config.js        # ✅ Tailwind CSS configuration
-├── tsconfig.json             # ✅ TypeScript configuration
-├── postcss.config.js         # ✅ PostCSS configuration
-├── package.json              # ✅ Dependencies
-├── todo.md                   # ✅ Implementation status & TODO
-└── CLAUDE.md                 # ✅ This file
-```
+**To Implement:**
+- ⚠️ Backend API integration
+- ⚠️ Month navigation
+- ⚠️ Mark bill paid functionality
+- ⚠️ Settings page
+- ⚠️ Full offline sync testing
+
+**See `todo.md` for detailed remaining tasks and next steps.**
 
 ---
 
@@ -144,7 +130,6 @@ routes/[lang]/about      → /:lang/about (dynamic layout)
 - `+load.ts` - Server-side data loading
 - `+page.server.ts` - Server actions
 - `+error.svelte` - Error boundary
-- `+page.svelte` with `/+layout.svelte` - Nested layouts
 
 ### Offline-First Architecture with IndexedDB
 
@@ -156,7 +141,7 @@ The frontend uses IndexedDB for offline data persistence:
 3. **Sync API** (`/api/sync/push`, `/api/sync/pull`) handles bidirectional sync
 4. **Conflict resolution** uses timestamp-based and owner-priority strategies
 
-**IndexedDB Database Structure:**
+**Database Structure:**
 ```typescript
 // Expected IndexedDB structure (using idb library)
 interface BudgetDB {
@@ -172,6 +157,12 @@ interface BudgetDB {
 }
 ```
 
+**Data Flow:**
+1. **Load data** from IndexedDB on app init
+2. **Sync with backend** via API on change
+3. **Update IndexedDB** when data changes
+4. **React to changes** using Svelte stores
+
 ### PWA Configuration
 
 **Service Worker** (`vite-plugin-pwa`):
@@ -185,6 +176,37 @@ interface BudgetDB {
 - Icons (generated via `npm run pwa:generate-icons`)
 - Theme and background colors
 - Display mode (standalone)
+
+### State Management with Svelte Stores
+
+**Writable Stores** (for client state):
+```typescript
+// src/lib/stores/budgets.ts
+import { writable } from 'svelte/store';
+
+export const budgets = writable<Budget[]>([]);
+export const currentBudget = writable<Budget | null>(null);
+```
+
+**Derived Stores** (computed values):
+```typescript
+import { derived } from 'svelte/store';
+
+const totalSpent = derived(budgets, ($budgets) =>
+  $budgets.reduce((sum, b) => sum + b.spent, 0)
+);
+```
+
+**Using Stores in Components:**
+```svelte
+<script>
+  import { budgets } from '$lib/stores/budgets';
+</script>
+
+{#each $budgets as budget}
+  <BudgetCard {budget} />
+{/each}
+```
 
 ### Clerk Authentication Integration
 
@@ -218,7 +240,7 @@ PUBLIC_CLERK_AFTER_SIGN_UP_URL=/dashboard
 
 **Usage Pattern:**
 1. Components are in `src/lib/components/ui/`
-2. Add components via Shadcn CLI: `npx shadcn-svelte@latest add [component]`
+2. Manually created (CLI unavailable in devcontainer)
 3. Import and use in Svelte files
 
 **Example:**
@@ -238,18 +260,18 @@ PUBLIC_CLERK_AFTER_SIGN_UP_URL=/dashboard
 - `card` - Card container with header, content, footer
 - `input` - Form input with labels
 - `select` - Dropdown selection
-- `dialog` - Modal/dialog component
-- `table` - Data table
+- `dialog` - Modal/dialog component (CustomModal for notebook aesthetic)
 - `badge` - Status badges
-- `toast` - Notifications
+
+**Note:** bits-ui Dialog had type definition issues, so CustomModal was created for the notebook aesthetic.
 
 ### Layout Components
 
 **Root Layout** (`src/routes/+layout.svelte`):
 - Navigation bar
 - Theme provider
-- Clerk authentication wrapper
-- PWA update prompt
+- Offline status indicator
+- Mobile bottom navigation
 
 **Feature Layouts:**
 - Dashboard layout with sidebar
@@ -258,117 +280,34 @@ PUBLIC_CLERK_AFTER_SIGN_UP_URL=/dashboard
 
 ---
 
-## State Management
-
-### Svelte Stores Pattern
-
-**Writable Stores** (for client state):
-```typescript
-// src/lib/stores/budgets.ts
-import { writable } from 'svelte/store';
-
-export const budgets = writable<Budget[]>([]);
-export const currentBudget = writable<Budget | null>(null);
-```
-
-**Derived Stores** (computed values):
-```typescript
-import { derived } from 'svelte/store';
-
-const totalSpent = derived(budgets, ($budgets) =>
-  $budgets.reduce((sum, b) => sum + b.spent, 0)
-);
-```
-
-**Using Stores in Components:**
-```svelte
-<script>
-  import { budgets } from '$lib/stores/budgets';
-</script>
-
-{#each $budgets as budget}
-  <BudgetCard {budget} />
-{/each}
-```
-
-### IndexedDB Data Flow
-
-**Pattern:**
-1. **Load data** from IndexedDB on app init
-2. **Sync with backend** via API on change
-3. **Update IndexedDB** when data changes
-4. **React to changes** using Svelte stores
-
-**IndexedDB Client** (`src/lib/db/index.ts`):
-```typescript
-import { openDB } from 'idb';
-
-export const db = await openDB<BudgetDB>('budget-planner', 1, {
-  upgrade(db) {
-    // Create object stores
-    db.createObjectStore('budgets', { keyPath: 'id' });
-    // ... other stores
-  }
-});
-```
-
-### Sync Queue Management
-
-**Offline Operation Queue:**
-```typescript
-// src/lib/stores/syncQueue.ts
-import { writable } from 'svelte/store';
-import { addToQueue, processQueue } from '$lib/db/sync';
-
-export const syncQueue = writable<SyncOperation[]>([]);
-export const isOnline = writable(navigator.onLine);
-
-// Add to queue when offline
-if (!$isOnline) {
-  addToQueue({ type: 'CREATE', entity: 'transaction', data });
-}
-
-// Process queue when online
-isOnline.subscribe((online) => {
-  if (online) processQueue();
-});
-```
-
----
-
 ## Styling
 
 ### Tailwind CSS Configuration
 
-**Configuration** (`tailwind.config.js`):
+**Custom Notebook Theme:**
 ```javascript
-export default {
-  content: ['./src/**/*.{html,js,svelte,ts}'],
-  theme: {
-    extend: {
-      colors: {
-        primary: {
-          DEFAULT: 'hsl(var(--primary))',
-          foreground: 'hsl(var(--primary-foreground))',
-        },
-        // ... other theme colors
-      }
+// tailwind.config.js
+theme: {
+  extend: {
+    colors: {
+      primary: '#333333',
+      'paper-light': '#fdfbf7',
+      'line-light': '#e5e7eb',
+    },
+    fontFamily: {
+      'display': ['Playfair Display', 'serif'],
+      'body': ['Inter', 'sans-serif'],
+      'handwriting': ['Caveat', 'cursive'],
     }
-  },
-  plugins: [require('@tailwindcss/forms')]
-};
-```
-
-**CSS Variables** (`src/app.css`):
-```css
-@layer base {
-  :root {
-    --primary: 210 40% 98%;  /* hsl values */
-    --primary-foreground: 222 47% 11%;
-    /* ... other variables */
   }
 }
 ```
+
+**CSS Classes:**
+- `.notebook-lines` - Ruled paper background pattern
+- `.binding-holes` - Spiral binding holes
+- `.binding-coil` - Gold gradient coil
+- `.custom-scrollbar` - Styled scrollbars
 
 ### Component Styling Patterns
 
@@ -384,11 +323,6 @@ const buttonVariants = cva(
         default: 'bg-primary text-primary-foreground',
         destructive: 'bg-destructive text-destructive-foreground',
         outline: 'border border-input bg-background',
-      },
-      size: {
-        default: 'h-10 px-4 py-2',
-        sm: 'h-9 rounded-md px-3',
-        lg: 'h-11 rounded-md px-8',
       }
     }
   }
@@ -404,127 +338,7 @@ import { cn } from '$lib/utils';
 
 ---
 
-## Development Workflow
-
-### Hot Reload with Vite
-
-- Vite dev server provides instant hot module replacement (HMR)
-- Changes to `.svelte` files update in browser without refresh
-- Changes to CSS update immediately
-
-### Type Checking
-
-**Check types:**
-```bash
-npm run check           # One-time type check
-npm run check:watch     # Watch mode for development
-```
-
-**TypeScript Config** (`tsconfig.json`):
-- Strict mode enabled
-- Path aliases: `$lib` → `src/lib`
-- SvelteKit type checking enabled
-
-### Linting and Formatting
-
-**Lint:**
-```bash
-npm run lint    # Check for issues
-```
-
-**Format:**
-```bash
-npm run format  # Format code with Prettier
-```
-
-**Prettier Config** (`.prettierrc`):
-```json
-{
-  "semi": true,
-  "singleQuote": true,
-  "plugins": ["prettier-plugin-svelte", "prettier-plugin-tailwindcss"]
-}
-```
-
-### Building for Production
-
-**Build:**
-```bash
-npm run build
-```
-
-**Output:**
-- `build/` directory with optimized assets
-- Server-side rendering (SSR) build
-- Client-side bundle
-- PWA assets and service worker
-
----
-
-## Environment Configuration
-
-### Environment Variables
-
-**File:** `.env` (create from `.env.example` if provided)
-
-```env
-# Clerk Authentication
-PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
-PUBLIC_CLERK_SIGN_IN_URL=/sign-in
-PUBLIC_CLERK_SIGN_UP_URL=/sign-up
-PUBLIC_CLERK_AFTER_SIGN_IN_URL=/dashboard
-PUBLIC_CLERK_AFTER_SIGN_UP_URL=/dashboard
-
-# API Configuration
-PUBLIC_API_URL=http://localhost:8080/api
-
-# PWA Configuration
-PUBLIC_APP_NAME="Budget Planner"
-PUBLIC_APP_SHORT_NAME="Budget"
-PUBLIC_APP_DESCRIPTION="Offline-first budget planning application"
-PUBLIC_APP_THEME_COLOR="#3b82f6"
-PUBLIC_APP_BACKGROUND_COLOR="#ffffff"
-
-# Offline Sync Settings
-PUBLIC_SYNC_INTERVAL=30000      # 30 seconds
-PUBLIC_OFFLINE_RETRY_DELAY=5000 # 5 seconds
-PUBLIC_MAX_OFFLINE_OPERATIONS=100
-```
-
-**Access in SvelteKit:**
-```svelte
-<script>
-  const apiUrl = import.meta.env.VITE_PUBLIC_API_URL;
-</script>
-```
-
-### Public API URL Configuration
-
-**Development:**
-```
-PUBLIC_API_URL=http://localhost:8080/api
-```
-
-**Production:**
-```
-PUBLIC_API_URL=https://api.budgetplanner.com/api
-```
-
-### Clerk Keys Setup
-
-1. Create Clerk account at https://clerk.com
-2. Create new application
-3. Copy publishable key to `.env`:
-   ```
-   PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
-   ```
-4. Configure redirect URLs in Clerk dashboard:
-   - Allowed redirect URLs: `http://localhost:5173/*`
-   - Allowed origins: `http://localhost:5173`
-
----
-
-## API Integration Patterns
+## API Integration
 
 ### Fetch API with TypeScript
 
@@ -582,42 +396,6 @@ export const load = async ({ fetch }) => {
 
 ---
 
-## PWA Development
-
-### Service Worker
-
-**Configuration** (`vite.config.js`):
-```javascript
-import { SvelteKitPWA } from 'vite-plugin-pwa';
-
-export default {
-  plugins: [
-    SvelteKitPWA({
-      strategies: ['networkFirst'],
-      srcDir: 'static',
-      filename: 'service-worker.js',
-      manifest: {
-        name: 'Budget Planner',
-        short_name: 'Budget',
-        // ...
-      }
-    })
-  ]
-};
-```
-
-### Icon Generation
-
-**Generate PWA Icons:**
-```bash
-npm run pwa:generate-icons
-```
-
-**Input:** `static/logo.png` (source logo)
-**Output:** `static/icons/` (multiple sizes)
-
----
-
 ## Common Patterns
 
 ### Route Protection
@@ -669,68 +447,121 @@ const formatDate = (date: Date) => {
 
 ---
 
+## Environment Configuration
+
+### Environment Variables
+
+**File:** `.env` (create from `.env.example` if provided)
+
+```env
+# Clerk Authentication
+PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
+PUBLIC_CLERK_SIGN_IN_URL=/sign-in
+PUBLIC_CLERK_SIGN_UP_URL=/sign-up
+PUBLIC_CLERK_AFTER_SIGN_IN_URL=/dashboard
+PUBLIC_CLERK_AFTER_SIGN_UP_URL=/dashboard
+
+# API Configuration
+PUBLIC_API_URL=http://localhost:8080/api
+
+# PWA Configuration
+PUBLIC_APP_NAME="Budget Planner"
+PUBLIC_APP_SHORT_NAME="Budget"
+PUBLIC_APP_DESCRIPTION="Offline-first budget planning application"
+PUBLIC_APP_THEME_COLOR="#3b82f6"
+PUBLIC_APP_BACKGROUND_COLOR="#ffffff"
+
+# Offline Sync Settings
+PUBLIC_SYNC_INTERVAL=30000      # 30 seconds
+PUBLIC_OFFLINE_RETRY_DELAY=5000 # 5 seconds
+PUBLIC_MAX_OFFLINE_OPERATIONS=100
+```
+
+**Access in SvelteKit:**
+```svelte
+<script>
+  const apiUrl = import.meta.env.VITE_PUBLIC_API_URL;
+</script>
+```
+
+---
+
 ## Important Files
 
-- `starting-point.md` (root) - Full project specification
-- `CLAUDE.md` (root) - Project-level documentation
-- `backend/CLAUDE.md` - Backend development guide
+- **`todo.md`** - **⭐ Implementation status and remaining tasks - START HERE**
+- **`CLAUDE.md`** (root) - Project-level documentation
+- **`backend/CLAUDE.md`** - Backend development guide
+- **`ui-page-inspiration.md`** - UI design inspiration with HTML/CSS examples
+- **`starting-point.md`** (root) - Full project specification
 
 ---
 
-## Development Environment Setup
+## Project Structure
 
-The devcontainer includes:
-- **Node.js 20** with Alpine Linux
-- **Chromium** for browser testing
-- Environment variables auto-generated on container create
-- Development certificates for HTTPS
+```
+frontend/
+├── src/
+│   ├── lib/
+│   │   ├── components/        # UI components (Button, Input, CustomModal, etc.)
+│   │   ├── stores/            # Svelte stores for state management
+│   │   ├── db/                # IndexedDB client setup
+│   │   ├── api/               # API client functions
+│   │   └── utils/             # Helper functions
+│   ├── routes/                # SvelteKit file-based routing
+│   │   ├── +layout.svelte      # Root layout with navigation
+│   │   ├── +page.svelte        # Budget Overview page
+│   │   ├── transactions/       # Expense Tracker + AddExpenseModal
+│   │   └── bills/              # Bill Payment page
+│   └── app.html               # HTML template
+├── static/
+│   ├── icons/                 # PWA icons
+│   └── manifest.json          # PWA manifest
+├── svelte.config.js           # SvelteKit configuration
+├── vite.config.ts             # Vite configuration
+├── tailwind.config.js         # Tailwind CSS configuration
+├── tsconfig.json              # TypeScript configuration
+├── package.json               # Dependencies
+├── .env                       # Environment variables
+└── todo.md                    # Implementation status
+```
 
 ---
 
-## Current Implementation Status
+## Development Workflow
 
-**Completed:**
-- ✅ package.json with all dependencies
-- ✅ npm scripts configured
-- ✅ Project structure planned
+### Hot Reload with Vite
 
-**To Implement:**
-- SvelteKit scaffolding
-- Component library setup (Shadcn-Svelte)
-- IndexedDB client
-- API client
-- Authentication integration
-- PWA configuration
-- Routing and pages
+- Vite dev server provides instant hot module replacement (HMR)
+- Changes to `.svelte` files update in browser without refresh
+- Changes to CSS update immediately
 
----
+### Type Checking
 
-## Dependencies
+```bash
+npm run check           # One-time type check
+npm run check:watch     # Watch mode for development
+```
 
-**Core Framework:**
-- `svelte@^5.0.0`
-- `@sveltejs/kit@^2.0.0`
-- `vite@^5.0.0`
-- `typescript@^5.0.0`
+**TypeScript Config** (`tsconfig.json`):
+- Strict mode enabled
+- Path aliases: `$lib` → `src/lib`
+- SvelteKit type checking enabled
 
-**UI & Styling:**
-- `@tailwindcss/forms@^0.5.9`
-- `tailwindcss@^3.4.10`
-- `class-variance-authority@^0.7.0`
-- `clsx@^2.0.0`
-- `lucide-svelte@^0.469.0`
+### Linting and Formatting
 
-**Offline Storage:**
-- `idb@^8.0.0` - IndexedDB wrapper
-- `workbox-window@^7.1.0` - Service worker management
+```bash
+npm run lint    # Check for issues
+npm run format  # Format code with Prettier
+```
 
-**Authentication:**
-- `@clerk/sveltekit@^2.0.0`
+### Building for Production
 
-**Development Tools:**
-- `@sveltejs/vite-plugin-svelte@^3.0.0`
-- `svelte-check@^3.0.0`
-- `vite-plugin-pwa@^0.20.0`
-- `prettier@^3.0.0`
-- `prettier-plugin-svelte@^3.0.0`
-- `prettier-plugin-tailwindcss@^0.6.5`
+```bash
+npm run build
+```
+
+**Output:**
+- `build/` directory with optimized assets
+- Server-side rendering (SSR) build
+- Client-side bundle
+- PWA assets and service worker
