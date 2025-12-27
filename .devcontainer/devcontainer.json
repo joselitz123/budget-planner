@@ -2,7 +2,7 @@
   "name": "Budget Planner Dev Container",
   "dockerComposeFile": "docker-compose.yml",
   "service": "app",
-  "workspaceFolder": "/workspace",
+  "workspaceFolder": "/workspace/budget-planner",
   "features": {
     "ghcr.io/devcontainers/features/common-utils:2": {
       "installZsh": true,
@@ -24,11 +24,7 @@
       "dockerDashComposeVersion": "v2"
     }
   },
-  "forwardPorts": [
-    5173,
-    8080,
-    5432
-  ],
+  "forwardPorts": [5173, 8080, 5432],
   "portsAttributes": {
     "5173": {
       "label": "Frontend (SvelteKit)",
