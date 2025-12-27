@@ -38,12 +38,14 @@
   },
   "dependencies": {
     "@fontsource/inter": "^5.1.0",
+    "bits-ui": "^2.14.4",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.0.0",
+    "idb": "^8.0.0",
     "lucide-svelte": "^0.469.0",
     "tailwind-merge": "^2.5.3",
-    "workbox-window": "^7.1.0",
-    "idb": "^8.0.0"
+    "tailwind-variants": "^3.2.2",
+    "workbox-window": "^7.1.0"
   },
   "type": "module"
 }

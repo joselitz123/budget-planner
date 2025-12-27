@@ -58,6 +58,37 @@ export async function getOrCreateBudgetForMonth(month: string): Promise<Budget |
 }
 
 /**
+ * Create budget for current month (auto-creation)
+ */
+export async function createBudgetForCurrentMonth(userId: string): Promise<Budget> {
+	const month = getMonthKey(new Date());
+
+	// Check if budget already exists
+	const existing = get(budgets).find((b) => b.month === month);
+	if (existing) {
+		currentBudget.set(existing);
+		return existing;
+	}
+
+	// Create new budget
+	const newBudget: Budget = {
+		id: crypto.randomUUID(),
+		userId,
+		month,
+		totalLimit: 2000, // Default limit - could be made configurable
+		createdAt: new Date().toISOString(),
+		updatedAt: new Date().toISOString()
+	};
+
+	await budgetStore.create(newBudget);
+	budgets.update((b) => [...b, newBudget]);
+	currentBudget.set(newBudget);
+
+	console.log('[Budgets] Auto-created budget for month:', month);
+	return newBudget;
+}
+
+/**
  * Set current month
  */
 export function setCurrentMonth(month: string): void {

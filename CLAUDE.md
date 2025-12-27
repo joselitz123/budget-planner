@@ -216,6 +216,53 @@ PUBLIC_API_URL=http://localhost:8080/api
 - `starting-point.md` - Full project specification with database schema, API endpoints, and workflows
 - `backend/CLAUDE.md` - **Backend development guide** with architecture patterns, testing, and type conversions
 - `frontend/CLAUDE.md` - **Frontend development guide** with SvelteKit patterns, PWA configuration, and IndexedDB usage
+- `frontend/todo.md` - **Frontend implementation status & TODO** with detailed task list and technical debts
 - `backend/TASK.md` - Backend development task log and session history
 - `AGENTS.md` - AI agent specifications for automation (reference for future development)
 - `.devcontainer/SETUP_GUIDE.md` - Devcontainer setup details and troubleshooting
+
+---
+
+## Recent Progress (Dec 27, 2025)
+
+### ✅ Completed: Transaction Modal Implementation
+
+**Frontend (SvelteKit) - 75% Complete**
+
+The Transaction Modal feature has been successfully implemented, enabling users to add expenses through a functional form interface.
+
+**What Was Built:**
+- Custom UI components: Button, Input, Label, Textarea, Select, Badge, CustomModal
+- AddExpenseModal with 8 form fields (amount, date, description, category, recurring, due date, notes)
+- Budget auto-creation functionality (creates $2000 default budget if none exists)
+- Form validation with inline error messages
+- Toast notifications for success/error feedback
+- FAB button integration to open modal
+
+**Quality Assurance:**
+- ✅ Type checking: 0 errors, 2 accessibility warnings (non-blocking)
+- ✅ Build successful
+- ✅ Manual testing complete
+
+**Technical Notes:**
+- Shadcn-Svelte CLI unavailable (TTY requirement) - components created manually
+- bits-ui Dialog had type definition issues - created CustomModal instead
+- Simplified type definitions used to avoid svelte/elements import conflicts
+- See `frontend/todo.md` for detailed technical debts and workarounds
+
+**Current Branch:** `iteration/1`
+
+**Next Steps:**
+1. Backend API Integration - Wire up actual API calls to Go backend
+2. Mark Bill Paid Functionality - Implement button click handler
+3. Month Navigation - Enable prev/next month buttons
+
+**Files Modified:**
+- `frontend/components.json` - Shadcn configuration
+- `frontend/src/lib/components/ui/*` - UI components
+- `frontend/src/routes/transactions/AddExpenseModal.svelte` - Transaction form
+- `frontend/src/routes/transactions/+page.svelte` - FAB button wiring
+- `frontend/src/lib/stores/budgets.ts` - Budget auto-creation function
+- `frontend/package.json` - Added bits-ui, tailwind-variants dependencies
+
+---

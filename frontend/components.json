@@ -1,0 +1,45 @@
+{
+	"$schema": "https://shadcn-svelte.com/schema.json",
+	"extends": ["style:default"],
+	"style": "default",
+	"types": {
+		"button": "Button",
+		"input": "Input",
+		"label": "Label",
+		"textarea": "Textarea",
+		"select": "Select",
+		"dialog": "Dialog",
+		"badge": "Badge"
+	},
+	"ui": {
+		"lib": "$lib/components/ui",
+		"components": "$lib/components",
+		"utils": "$lib/utils"
+	},
+	"utils": {
+		"cn": "$lib/utils/cn.ts",
+		"aliases": {
+			"components": "$lib/components",
+			"utils": "$lib/utils",
+			"ui": "$lib/components/ui"
+		}
+	},
+	"tailwind": {
+		"config": "tailwind.config.js",
+		"css": "src/app.css",
+		"baseColor": "slate"
+	},
+	"aliases": {
+		"components": "$lib/components",
+		"utils": "$lib/utils",
+		"ui": "$lib/components/ui"
+	},
+	"files": {
+		"cssVariables": true,
+		"tailwind": {
+			"baseColor": "slate"
+		}
+	},
+	"library": "shadcn-svelte",
+	"iconLibrary": "lucide-svelte"
+}

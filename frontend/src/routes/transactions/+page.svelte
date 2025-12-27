@@ -3,6 +3,24 @@
 	import { formatCurrency, formatShortDate, getCategoryColor } from '$lib/utils/format';
 	import { filteredTransactions, totalSpent } from '$lib/stores';
 	import { getCategoryById } from '$lib/stores/categories';
+	import { addTransaction } from '$lib/stores/transactions';
+	import { showToast } from '$lib/stores/ui';
+	import AddExpenseModal from './AddExpenseModal.svelte';
+	import type { Transaction } from '$lib/db/schema';
+
+	let modalOpen = false;
+	let userId = 'temp-user'; // TODO: Get from Clerk auth
+
+	async function handleAddTransaction(transaction: Transaction) {
+		try {
+			await addTransaction(transaction);
+			showToast('Expense added successfully!', 'success');
+			modalOpen = false;
+		} catch (error) {
+			console.error('[Transactions] Error adding transaction:', error);
+			showToast('Failed to add expense', 'error');
+		}
+	}
 </script>
 
 <div class="space-y-6">
@@ -121,9 +139,17 @@
 
 	<!-- Add Expense FAB -->
 	<button
+		onclick={() => (modalOpen = true)}
 		class="fixed bottom-24 right-6 md:bottom-8 bg-primary text-white p-4 rounded-full shadow-lg hover:shadow-xl hover:bg-gray-700 transition-all transform hover:-translate-y-1 z-30"
 		aria-label="Add expense"
 	>
 		<span class="material-icons-outlined text-2xl">add</span>
 	</button>
+
+	<!-- Add Expense Modal -->
+	<AddExpenseModal
+		bind:open={modalOpen}
+		{userId}
+		on:submit={(e) => handleAddTransaction(e.detail)}
+	/>
 </div>
