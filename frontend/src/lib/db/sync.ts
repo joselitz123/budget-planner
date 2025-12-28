@@ -2,6 +2,7 @@ import { syncQueueStore } from './stores';
 import type { SyncOperation } from './schema';
 import { get } from 'svelte/store';
 import { isOnline, syncStatus, lastSync } from '$lib/stores/offline';
+import { showToast } from '$lib/stores/ui';
 
 /**
  * Add operation to sync queue
@@ -90,6 +91,7 @@ export async function processSyncQueue(): Promise<void> {
 		console.log(`[Sync] Completed: ${successfulOps.length} successful, ${failedOps.length} failed`);
 	} catch (error) {
 		console.error('[Sync] Error processing queue:', error);
+		showToast('Sync failed. Will retry automatically.', 'warning');
 
 		// Mark operations as failed
 		for (const op of pendingOps) {
@@ -143,6 +145,7 @@ export async function pullFromServer(lastSyncTimestamp?: string): Promise<void> 
 		console.log('[Sync] Pull completed successfully');
 	} catch (error) {
 		console.error('[Sync] Error pulling from server:', error);
+		showToast('Failed to sync with server. Will retry later.', 'warning');
 		syncStatus.set('error');
 	}
 }

@@ -3,6 +3,7 @@ import { budgetStore } from '$lib/db/stores';
 import type { Budget } from '$lib/db/schema';
 import { getMonthKey, parseMonthKey } from '$lib/utils/format';
 import { budgetsApi } from '$lib/api/budgets';
+import { showToast } from '$lib/stores/ui';
 
 /**
  * Budget state management
@@ -73,6 +74,7 @@ export async function loadBudgets(): Promise<void> {
 				return;
 			} catch (error) {
 				console.warn('[Budgets] API load failed, falling back to IndexedDB:', error);
+				showToast('Using offline data. Connect to internet for latest data.', 'warning');
 				// Fall through to IndexedDB loading
 			}
 		}
@@ -83,6 +85,10 @@ export async function loadBudgets(): Promise<void> {
 		console.log(`[Budgets] Loaded ${allBudgets.length} budgets from IndexedDB`);
 	} catch (error) {
 		console.error('[Budgets] Error loading budgets:', error);
+		showToast(
+			error instanceof Error ? error.message : 'Failed to load budgets',
+			'error'
+		);
 	} finally {
 		budgetsLoading.set(false);
 	}
@@ -146,6 +152,7 @@ export async function createBudgetForCurrentMonth(userId: string): Promise<Budge
 			return newBudget;
 		} catch (error) {
 			console.warn('[Budgets] API create failed, using local fallback:', error);
+			showToast('Saved locally. Will sync when connection is restored.', 'warning');
 			// Fall through to local creation
 		}
 	}

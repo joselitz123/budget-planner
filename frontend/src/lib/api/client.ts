@@ -1,4 +1,5 @@
 import type { ApiResponse } from '$lib/db/schema';
+import { showToast } from '$lib/stores/ui';
 
 /**
  * Authentication token provider interface
@@ -63,34 +64,45 @@ export class ApiClient {
 	 * Handle API errors with user-friendly messages
 	 */
 	private handleApiError(response: Response, data?: any): never {
+		let message = '';
+
 		// Handle 401 Unauthorized - auth token expired or invalid
 		if (response.status === 401) {
+			message = 'Session expired. Please log in again.';
 			console.error('[API] Unauthorized - please log in again');
-			throw new Error('Session expired. Please log in again.');
+			showToast(message, 'error', 5000);
+			throw new Error(message);
 		}
 
 		// Handle 403 Forbidden
 		if (response.status === 403) {
+			message = 'You do not have permission to perform this action.';
 			console.error('[API] Forbidden - insufficient permissions');
-			throw new Error('You do not have permission to perform this action.');
+			showToast(message, 'error', 5000);
+			throw new Error(message);
 		}
 
 		// Handle 404 Not Found
 		if (response.status === 404) {
+			message = 'The requested resource was not found.';
 			console.error('[API] Resource not found');
-			throw new Error('The requested resource was not found.');
+			showToast(message, 'error', 3000);
+			throw new Error(message);
 		}
 
 		// Handle 500 Server Error
 		if (response.status >= 500) {
+			message = 'Server error. Please try again later.';
 			console.error('[API] Server error:', response.statusText);
-			throw new Error('Server error. Please try again later.');
+			showToast(message, 'error', 5000);
+			throw new Error(message);
 		}
 
 		// Handle other errors
-		const errorMessage = data?.error?.message || response.statusText || 'API request failed';
-		console.error('[API] Error:', errorMessage);
-		throw new Error(errorMessage);
+		message = data?.error?.message || response.statusText || 'API request failed';
+		console.error('[API] Error:', message);
+		showToast(message, 'error', 3000);
+		throw new Error(message);
 	}
 
 	/**

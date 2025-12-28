@@ -6,6 +6,7 @@
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { Skeleton } from '$lib/components/ui/skeleton';
 	import type { Transaction } from '$lib/db/schema';
+	import { showToast } from '$lib/stores/ui';
 
 	async function markAsPaid(bill: Transaction) {
 		try {
@@ -14,7 +15,7 @@
 			await updateTransaction(updated);
 		} catch (error) {
 			console.error('Failed to mark bill as paid:', error);
-			// Could show toast notification here
+			showToast('Failed to mark bill as paid. Please try again.', 'error');
 		}
 	}
 </script>

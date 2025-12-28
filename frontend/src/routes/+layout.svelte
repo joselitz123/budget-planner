@@ -4,8 +4,9 @@
 	import { initDB } from '$lib/db';
 	import { loadBudgets, loadTransactions, currentMonth, goToPreviousMonth, goToNextMonth } from '$lib/stores';
 	import { formatMonthYear } from '$lib/utils/format';
-	import { initTheme } from '$lib/stores/ui';
+	import { initTheme, showToast } from '$lib/stores/ui';
 	import { isOnline } from '$lib/stores/offline';
+	import { ToastContainer } from '$lib/components/ui/toast';
 
 	// Initialize app
 	onMount(async () => {
@@ -23,6 +24,7 @@
 			console.log('[App] Initial data loaded');
 		} catch (error) {
 			console.error('[App] Error initializing:', error);
+			showToast('Failed to initialize app. Some features may not work.', 'warning');
 		}
 	});
 </script>
@@ -115,4 +117,7 @@
 
 	<!-- Spacer for mobile navigation -->
 	<div class="h-16 md:hidden"></div>
+
+	<!-- Toast Container -->
+	<ToastContainer />
 </div>

@@ -1,6 +1,7 @@
 import { writable, derived, get } from 'svelte/store';
 import { categoryStore } from '$lib/db/stores';
 import type { Category } from '$lib/db/schema';
+import { showToast } from '$lib/stores/ui';
 
 /**
  * Category state management
@@ -110,6 +111,10 @@ export async function loadCategories(userId?: string): Promise<void> {
 		}
 	} catch (error) {
 		console.error('[Categories] Error loading categories:', error);
+		showToast(
+			error instanceof Error ? error.message : 'Failed to load categories',
+			'error'
+		);
 	}
 }
 
@@ -133,6 +138,10 @@ export async function addCategory(category: Category): Promise<void> {
 		console.log('[Categories] Added category:', category.id);
 	} catch (error) {
 		console.error('[Categories] Error adding category:', error);
+		showToast(
+			error instanceof Error ? error.message : 'Failed to add category',
+			'error'
+		);
 		throw error;
 	}
 }

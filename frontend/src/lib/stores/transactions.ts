@@ -4,6 +4,7 @@ import type { Transaction } from '$lib/db/schema';
 import { formatCurrency } from '$lib/utils/format';
 import { currentBudget } from './budgets';
 import { transactionsApi } from '$lib/api/transactions';
+import { showToast } from '$lib/stores/ui';
 
 /**
  * Transaction state management
@@ -98,6 +99,7 @@ export async function loadTransactions(): Promise<void> {
 				return;
 			} catch (error) {
 				console.warn('[Transactions] API load failed, falling back to IndexedDB:', error);
+				showToast('Using offline data. Connect to internet for latest data.', 'warning');
 				// Fall through to IndexedDB loading
 			}
 		}
@@ -108,6 +110,10 @@ export async function loadTransactions(): Promise<void> {
 		console.log(`[Transactions] Loaded ${allTransactions.length} transactions from IndexedDB`);
 	} catch (error) {
 		console.error('[Transactions] Error loading transactions:', error);
+		showToast(
+			error instanceof Error ? error.message : 'Failed to load transactions',
+			'error'
+		);
 	} finally {
 		transactionsLoading.set(false);
 	}
@@ -132,6 +138,7 @@ export async function addTransaction(transaction: Transaction): Promise<void> {
 			return;
 		} catch (error) {
 			console.warn('[Transactions] API create failed, using local fallback:', error);
+			showToast('Saved locally. Will sync when connection is restored.', 'warning');
 			// Fall through to local creation
 		}
 	}
@@ -152,6 +159,10 @@ export async function addTransaction(transaction: Transaction): Promise<void> {
 		});
 	} catch (error) {
 		console.error('[Transactions] Error adding transaction:', error);
+		showToast(
+			error instanceof Error ? error.message : 'Failed to add transaction',
+			'error'
+		);
 		throw error;
 	}
 }
@@ -177,6 +188,7 @@ export async function updateTransaction(transaction: Transaction): Promise<void>
 			return;
 		} catch (error) {
 			console.warn('[Transactions] API update failed, using local fallback:', error);
+			showToast('Updated locally. Will sync when connection is restored.', 'warning');
 			// Fall through to local update
 		}
 	}
@@ -199,6 +211,10 @@ export async function updateTransaction(transaction: Transaction): Promise<void>
 		});
 	} catch (error) {
 		console.error('[Transactions] Error updating transaction:', error);
+		showToast(
+			error instanceof Error ? error.message : 'Failed to update transaction',
+			'error'
+		);
 		throw error;
 	}
 }
@@ -222,6 +238,7 @@ export async function deleteTransaction(transactionId: string): Promise<void> {
 			return;
 		} catch (error) {
 			console.warn('[Transactions] API delete failed, using local fallback:', error);
+			showToast('Deleted locally. Will sync when connection is restored.', 'warning');
 			// Fall through to local deletion
 		}
 	}
@@ -242,6 +259,10 @@ export async function deleteTransaction(transactionId: string): Promise<void> {
 		});
 	} catch (error) {
 		console.error('[Transactions] Error deleting transaction:', error);
+		showToast(
+			error instanceof Error ? error.message : 'Failed to delete transaction',
+			'error'
+		);
 		throw error;
 	}
 }
