@@ -1,6 +1,7 @@
 <script lang="ts">
 	import '../app.css';
 	import { onMount } from 'svelte';
+	import { page } from '$app/stores';
 	import { initDB } from '$lib/db';
 	import { loadBudgets, loadTransactions, currentMonth, goToPreviousMonth, goToNextMonth } from '$lib/stores';
 	import { formatMonthYear } from '$lib/utils/format';
@@ -96,19 +97,48 @@
 		class="fixed bottom-0 left-0 right-0 bg-paper-light dark:bg-paper-dark border-t border-line-light dark:border-line-dark py-2 px-4 z-40 md:hidden"
 	>
 		<div class="flex justify-around items-center">
-			<a href="/" class="flex flex-col items-center text-primary dark:text-white">
+			<a
+				href="/"
+				class="flex flex-col items-center {$page.url.pathname === '/'
+					? 'text-primary dark:text-white'
+					: 'text-gray-400 dark:text-gray-500'}"
+			>
 				<span class="material-icons-outlined">dashboard</span>
 				<span class="text-[10px] mt-1">Overview</span>
 			</a>
-			<a href="/transactions" class="flex flex-col items-center text-gray-400 dark:text-gray-500">
+			<a
+				href="/transactions"
+				class="flex flex-col items-center {$page.url.pathname === '/transactions'
+					? 'text-primary dark:text-white'
+					: 'text-gray-400 dark:text-gray-500'}"
+			>
 				<span class="material-icons-outlined">receipt_long</span>
 				<span class="text-[10px] mt-1">Transactions</span>
 			</a>
-			<a href="/bills" class="flex flex-col items-center text-gray-400 dark:text-gray-500">
+			<a
+				href="/analytics"
+				class="flex flex-col items-center {$page.url.pathname === '/analytics'
+					? 'text-primary dark:text-white'
+					: 'text-gray-400 dark:text-gray-500'}"
+			>
+				<span class="material-icons-outlined">pie_chart</span>
+				<span class="text-[10px] mt-1">Analytics</span>
+			</a>
+			<a
+				href="/bills"
+				class="flex flex-col items-center {$page.url.pathname === '/bills'
+					? 'text-primary dark:text-white'
+					: 'text-gray-400 dark:text-gray-500'}"
+			>
 				<span class="material-icons-outlined">account_balance_wallet</span>
 				<span class="text-[10px] mt-1">Bills</span>
 			</a>
-			<a href="/settings" class="flex flex-col items-center text-gray-400 dark:text-gray-500">
+			<a
+				href="/settings"
+				class="flex flex-col items-center {$page.url.pathname === '/settings'
+					? 'text-primary dark:text-white'
+					: 'text-gray-400 dark:text-gray-500'}"
+			>
 				<span class="material-icons-outlined">settings</span>
 				<span class="text-[10px] mt-1">Settings</span>
 			</a>
