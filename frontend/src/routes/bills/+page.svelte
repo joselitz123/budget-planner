@@ -2,6 +2,19 @@
 	import { formatCurrency, formatShortDate } from '$lib/utils/format';
 	import { unpaidBills } from '$lib/stores';
 	import { getCategoryById } from '$lib/stores/categories';
+	import { updateTransaction } from '$lib/stores/transactions';
+	import type { Transaction } from '$lib/db/schema';
+
+	async function markAsPaid(bill: Transaction) {
+		try {
+			// Create updated transaction with paid = true
+			const updated = { ...bill, paid: true };
+			await updateTransaction(updated);
+		} catch (error) {
+			console.error('Failed to mark bill as paid:', error);
+			// Could show toast notification here
+		}
+	}
 </script>
 
 <div class="space-y-6">
@@ -93,6 +106,7 @@
 							<button
 								class="mt-1 text-xs text-primary underline decoration-dotted hover:text-blue-600 dark:hover:text-blue-400"
 								type="button"
+								onclick={() => markAsPaid(bill)}
 							>
 								Mark Paid
 							</button>

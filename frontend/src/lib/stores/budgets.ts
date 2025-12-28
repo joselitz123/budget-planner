@@ -2,10 +2,16 @@ import { writable, derived, get } from 'svelte/store';
 import { budgetStore } from '$lib/db/stores';
 import type { Budget } from '$lib/db/schema';
 import { getMonthKey, parseMonthKey } from '$lib/utils/format';
+import { budgetsApi } from '$lib/api/budgets';
 
 /**
  * Budget state management
+ * Supports both API and IndexedDB (offline-first)
  */
+
+// Flag to enable/disable API integration
+// Set to false to use only IndexedDB (offline mode)
+let USE_API = true;
 
 // All budgets
 export const budgets = writable<Budget[]>([]);
@@ -31,15 +37,47 @@ export const allMonths = derived(budgets, ($budgets) => {
 });
 
 /**
- * Load budgets from IndexedDB
+ * Load budgets from API (with IndexedDB fallback)
  */
 export async function loadBudgets(): Promise<void> {
+	// Try API first if enabled
+	if (USE_API) {
+		try {
+			const apiBudgets = await budgetsApi.getAllBudgets();
+
+			// Convert API response to Budget type
+			const budgetsData: Budget[] = apiBudgets.map(b => ({
+				id: b.id,
+				userId: b.userId,
+				month: b.month.substring(0, 7), // Convert YYYY-MM-DD to YYYY-MM
+				totalLimit: b.totalLimit,
+				createdAt: b.createdAt,
+				updatedAt: b.updatedAt
+			}));
+
+			// Update store
+			budgets.set(budgetsData);
+
+			// Update IndexedDB for offline access
+			for (const budget of budgetsData) {
+				await budgetStore.update(budget);
+			}
+
+			console.log(`[Budgets] Loaded ${budgetsData.length} budgets from API`);
+			return;
+		} catch (error) {
+			console.warn('[Budgets] API load failed, falling back to IndexedDB:', error);
+			// Fall through to IndexedDB loading
+		}
+	}
+
+	// Fallback to IndexedDB
 	try {
 		const allBudgets = await budgetStore.getAll();
 		budgets.set(allBudgets);
-		console.log(`[Budgets] Loaded ${allBudgets.length} budgets`);
+		console.log(`[Budgets] Loaded ${allBudgets.length} budgets from IndexedDB`);
 	} catch (error) {
-		console.error('[Budgets] Error loading budgets:', error);
+		console.error('[Budgets] Error loading budgets from IndexedDB:', error);
 	}
 }
 
@@ -70,7 +108,42 @@ export async function createBudgetForCurrentMonth(userId: string): Promise<Budge
 		return existing;
 	}
 
-	// Create new budget
+	// Try to create via API if enabled
+	if (USE_API) {
+		try {
+			// Convert YYYY-MM to YYYY-MM-DD (first day of month)
+			const monthDate = `${month}-01`;
+
+			const apiBudget = await budgetsApi.createBudget({
+				month: monthDate,
+				totalLimit: 2000 // Default limit
+			});
+
+			const newBudget: Budget = {
+				id: apiBudget.id,
+				userId: apiBudget.userId,
+				month: apiBudget.month.substring(0, 7),
+				totalLimit: apiBudget.totalLimit,
+				createdAt: apiBudget.createdAt,
+				updatedAt: apiBudget.updatedAt
+			};
+
+			// Update IndexedDB for offline access
+			await budgetStore.create(newBudget);
+
+			// Update store
+			budgets.update((b) => [...b, newBudget]);
+			currentBudget.set(newBudget);
+
+			console.log('[Budgets] Created budget via API for month:', month);
+			return newBudget;
+		} catch (error) {
+			console.warn('[Budgets] API create failed, using local fallback:', error);
+			// Fall through to local creation
+		}
+	}
+
+	// Fallback: Create locally (will sync later)
 	const newBudget: Budget = {
 		id: crypto.randomUUID(),
 		userId,
@@ -84,7 +157,16 @@ export async function createBudgetForCurrentMonth(userId: string): Promise<Budge
 	budgets.update((b) => [...b, newBudget]);
 	currentBudget.set(newBudget);
 
-	console.log('[Budgets] Auto-created budget for month:', month);
+	// Queue for sync
+	const { addToSyncQueue } = await import('$lib/db/sync');
+	await addToSyncQueue({
+		table: 'budgets',
+		recordId: newBudget.id,
+		operation: 'CREATE',
+		data: newBudget
+	});
+
+	console.log('[Budgets] Auto-created budget locally for month:', month);
 	return newBudget;
 }
 

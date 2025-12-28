@@ -2,7 +2,7 @@
 	import '../app.css';
 	import { onMount } from 'svelte';
 	import { initDB } from '$lib/db';
-	import { loadBudgets, loadTransactions, currentMonth } from '$lib/stores';
+	import { loadBudgets, loadTransactions, currentMonth, goToPreviousMonth, goToNextMonth } from '$lib/stores';
 	import { formatMonthYear } from '$lib/utils/format';
 	import { initTheme } from '$lib/stores/ui';
 	import { isOnline } from '$lib/stores/offline';
@@ -42,10 +42,9 @@
 				<!-- Month Selector -->
 				<div class="flex items-center space-x-2">
 					<button
-						onclick={() => {
-							// Navigate to previous month
-						}}
+						onclick={() => goToPreviousMonth()}
 						class="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+						aria-label="Previous month"
 					>
 						<span class="material-icons-outlined text-primary dark:text-white">chevron_left</span>
 					</button>
@@ -55,10 +54,9 @@
 						{/if}
 					</span>
 					<button
-						onclick={() => {
-							// Navigate to next month
-						}}
+						onclick={() => goToNextMonth()}
 						class="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+						aria-label="Next month"
 					>
 						<span class="material-icons-outlined text-primary dark:text-white">chevron_right</span>
 					</button>
