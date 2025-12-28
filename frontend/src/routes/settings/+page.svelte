@@ -4,6 +4,24 @@
 	import { currency, formatCurrencyWithCode } from '$lib/stores/settings';
 	import { budgetStore, transactionStore, categoryStore } from '$lib/db/stores';
 	import { loadBudgets, loadTransactions } from '$lib/stores';
+	import { manualSync, getSyncStatus } from '$lib/db/sync';
+	import { isOnline, syncIndicator, lastSync } from '$lib/stores/offline';
+
+	// Sync status for display
+	let syncStatusPromise = Promise.resolve<{ pending: number; lastSync: string | null; status: 'idle' | 'syncing' | 'error' }>({
+		pending: 0,
+		lastSync: null,
+		status: 'idle'
+	});
+
+	/**
+	 * Manual sync trigger
+	 */
+	async function handleManualSync() {
+		await manualSync();
+		// Refresh sync status display
+		syncStatusPromise = getSyncStatus();
+	}
 
 	/**
 	 * Export all data as JSON
@@ -194,6 +212,73 @@
 			<p class="mt-3 text-xs text-gray-400 dark:text-gray-500">
 				Example: {formatCurrencyWithCode(1234.56, $currency)}
 			</p>
+		</div>
+	</div>
+
+	<!-- Sync Section -->
+	<div
+		class="bg-paper-light dark:bg-paper-dark rounded-xl shadow-paper border border-line-light dark:border-line-dark overflow-hidden mb-6"
+	>
+		<div class="bg-primary dark:bg-gray-700 text-white p-3 flex justify-between items-center">
+			<h3 class="font-display font-semibold tracking-wide uppercase text-sm">Sync Status</h3>
+			<span class="material-icons text-sm opacity-80">sync</span>
+		</div>
+		<div class="p-4">
+			<div class="flex items-center justify-between mb-3">
+				<div>
+					<p class="font-semibold text-gray-800 dark:text-gray-100">Data Synchronization</p>
+					<p class="text-sm text-gray-500 dark:text-gray-400">
+						{#if $isOnline}
+							Connected and syncing automatically
+						{:else}
+							Offline - changes will sync when connected
+						{/if}
+					</p>
+				</div>
+				<button
+					onclick={handleManualSync}
+					disabled={!$isOnline || $syncIndicator.status === 'syncing'}
+					class="px-4 py-2 rounded-lg border border-line-light dark:border-line-dark hover:bg-gray-100 dark:hover:bg-gray-800 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+					aria-label="Sync now"
+				>
+					<span class="material-icons text-primary dark:text-white">refresh</span>
+					<span class="text-sm font-medium text-gray-700 dark:text-gray-300">Sync Now</span>
+				</button>
+			</div>
+			<div class="grid grid-cols-3 gap-4 text-center">
+				<div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
+					<p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Status</p>
+					<p
+						class="text-sm font-semibold {$syncIndicator.status === 'syncing'
+							? 'text-blue-600 dark:text-blue-400'
+							: $syncIndicator.status === 'error'
+								? 'text-red-600 dark:text-red-400'
+								: $syncIndicator.status === 'pending'
+									? 'text-orange-600 dark:text-orange-400'
+									: $syncIndicator.status === 'synced'
+										? 'text-green-600 dark:text-green-400'
+										: 'text-gray-600 dark:text-gray-400'}"
+					>
+						{$syncIndicator.label}
+					</p>
+				</div>
+				<div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
+					<p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Pending</p>
+					<p class="text-sm font-semibold text-gray-800 dark:text-gray-100">
+						{$syncIndicator.count}
+					</p>
+				</div>
+				<div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
+					<p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Last Sync</p>
+					<p class="text-sm font-semibold text-gray-800 dark:text-gray-100">
+						{#if $lastSync}
+							{new Date($lastSync).toLocaleTimeString()}
+						{:else}
+							Never
+						{/if}
+					</p>
+				</div>
+			</div>
 		</div>
 	</div>
 

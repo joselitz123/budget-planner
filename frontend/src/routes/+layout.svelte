@@ -1,12 +1,12 @@
 <script lang="ts">
 	import '../app.css';
-	import { onMount } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
 	import { page } from '$app/stores';
-	import { initDB } from '$lib/db';
+	import { initDB, initBackgroundSync, stopBackgroundSync } from '$lib/db';
 	import { loadBudgets, loadTransactions, currentMonth, goToPreviousMonth, goToNextMonth } from '$lib/stores';
 	import { formatMonthYear } from '$lib/utils/format';
 	import { initTheme, showToast } from '$lib/stores/ui';
-	import { isOnline } from '$lib/stores/offline';
+	import { isOnline, syncIndicator } from '$lib/stores/offline';
 	import { ToastContainer } from '$lib/components/ui/toast';
 
 	// Initialize app
@@ -23,10 +23,20 @@
 			await loadBudgets();
 			await loadTransactions();
 			console.log('[App] Initial data loaded');
+
+			// Initialize background sync
+			initBackgroundSync();
+			console.log('[App] Background sync initialized');
 		} catch (error) {
 			console.error('[App] Error initializing:', error);
 			showToast('Failed to initialize app. Some features may not work.', 'warning');
 		}
+	});
+
+	// Cleanup on destroy
+	onDestroy(() => {
+		stopBackgroundSync();
+		console.log('[App] Background sync stopped');
 	});
 </script>
 
@@ -42,6 +52,26 @@
 			</div>
 
 			<div class="flex items-center space-x-3">
+				<!-- Sync Status Indicator -->
+				<div class="flex items-center space-x-1 text-xs font-medium" aria-live="polite">
+					{#if $syncIndicator.status === 'syncing'}
+						<span class="material-icons-outlined text-blue-500 animate-spin" style="font-size: 16px;">sync</span>
+						<span class="text-blue-600 dark:text-blue-400">{$syncIndicator.label}</span>
+					{:else if $syncIndicator.status === 'error'}
+						<span class="material-icons-outlined text-red-500" style="font-size: 16px;">error</span>
+						<span class="text-red-600 dark:text-red-400">{$syncIndicator.label}</span>
+					{:else if $syncIndicator.status === 'pending'}
+						<span class="material-icons-outlined text-orange-500" style="font-size: 16px;">cloud_upload</span>
+						<span class="text-orange-600 dark:text-orange-400">{$syncIndicator.label}</span>
+					{:else if $syncIndicator.status === 'synced'}
+						<span class="material-icons-outlined text-green-500" style="font-size: 16px;">check_circle</span>
+						<span class="text-green-600 dark:text-green-400 hidden sm:inline">{$syncIndicator.label}</span>
+					{:else}
+						<!-- offline -->
+						<span class="material-icons-outlined text-gray-500" style="font-size: 16px;">cloud_off</span>
+					{/if}
+				</div>
+
 				<!-- Month Selector -->
 				<div class="flex items-center space-x-2">
 					<button
