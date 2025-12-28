@@ -368,3 +368,222 @@ beans archive
 - No certificates/keys in repository
 - No credentials in config files
 - Production secrets not in dev commits
+
+---
+
+## KICK-START Workflow
+
+When you mention the keyword **"KICK-START"**, I will:
+
+### 1. Run Beans Prime
+
+Run `beans prime` to get latest context from Beans system and prepare for the session.
+
+### 2. Show Session Context
+
+Display:
+- Most recent commit with bean metadata (from WRAP-UP)
+- Last beans completed/updated
+- Session date from commit message
+- Time since last session
+
+### 3. Show Open Tasks by Priority
+
+Group tasks by priority with visual indicators:
+
+**🔴 CRITICAL** - Must do now (blocks release or essential functionality)
+- Bean ID and title
+- Type and priority
+- Effort estimate
+- Tags (frontend/backend, feature area)
+- Brief description
+
+**🟠 HIGH** - Important but not blocking
+**🟡 NORMAL** - Standard priority tasks
+**🟢 LOW** - Nice to have, can defer
+
+Include:
+- Bean ID (e.g., BP-r94p)
+- Title
+- Type (feature/bug/task)
+- Effort estimate
+- Tags
+- Dependencies (if any)
+
+### 4. Check Git Status
+
+Show:
+- Uncommitted changes?
+- Untracked files?
+- Current branch
+- Branch status (ahead/behind origin)
+- Last commit summary
+
+### 5. Show Recent Activity
+
+- Last 3 commits with bean IDs
+- Beans completed in last session
+- Recently updated beans
+- Session history
+
+### 6. Suggest Next Steps
+
+Recommend based on:
+- Priority (critical first)
+- Dependencies (blocking tasks)
+- Context (what was just completed)
+- Quick wins (low effort, high value)
+
+Top 3 tasks to work on next.
+
+### 7. Check Environment (Optional)
+
+Verify:
+- PostgreSQL running (`docker ps`)
+- Backend ready (`cd backend`, check `air` status)
+- Frontend ready (`cd frontend`, check dev server)
+
+---
+
+### KICK-START Example Session
+
+**User says:** "KICK-START"
+
+**I will:**
+
+1. **Run `beans prime`** and gather context
+
+2. **Display session context:**
+   ```
+   🚀 KICK-START: Budget Planner Development Session
+   =================================================
+
+   📅 Last Session: 2025-12-28
+   ✅ Completed: BP-0g0d - Backend Complete: All 10 Handlers (archived)
+   ```
+
+3. **Show open tasks by priority:**
+   ```
+   🔴 CRITICAL TASKS (2):
+   ==================
+   1. BP-r94p: Backend API Integration
+      - Type: feature | Priority: critical
+      - Effort: 3 hours
+      - Tags: frontend, api, sync, backend
+      - Wire up actual API calls to Go backend for all CRUD operations
+
+   2. BP-mmy2: Mark Bill Paid Functionality
+      - Type: feature | Priority: critical
+      - Effort: 30 min
+      - Tags: frontend, ui
+      - Implement mark bill paid button in bills page
+
+   🟠 HIGH PRIORITY TASKS (2):
+   ==========================
+   3. BP-mfu9: Month Navigation (30 min)
+   4. BP-7v89: Settings Page (1 hour)
+
+   🟡 NORMAL PRIORITY TASKS (4):
+   =============================
+   5. BP-8fwz: Loading States (1 hour)
+   6. BP-0mr6: Error Handling (1 hour)
+   7. BP-577b: Shadcn-Svelte CLI Unavailable (tech-debt, 2 hours)
+   8. BP-8qmq: TypeScript Type Definition Simplification (tech-debt, 2 hours)
+
+   🟢 LOW PRIORITY TASKS (2):
+   =========================
+   9. BP-7k0g: Analytics/Insights Page (2 hours)
+   10. BP-kocv: PWA Icons Generation (30 min)
+   ```
+
+4. **Check git status:**
+   ```
+   📂 Git Status:
+   ============
+   ✅ No uncommitted changes
+   ✅ On branch: iteration/1
+   ✅ Up to date with origin
+   ```
+
+5. **Show recent activity:**
+   ```
+   📝 Recent Activity:
+   ==================
+   2bfc532 feat: migrate from todo.md to Beans task management system
+   5574f32 docs: optimize CLAUDE.md files and add WRAP-UP workflow
+   dfc8bb0 test: achieve 100% test coverage (48/48 tests passing)
+   ```
+
+6. **Suggest next steps:**
+   ```
+   💡 Suggested Next Steps:
+   ========================
+   1. Start with BP-r94p (Backend API Integration)
+      → Critical priority, blocks other tasks
+      → Requires: Backend integration, JWT tokens, error handling
+
+   2. Then BP-mmy2 (Mark Bill Paid)
+      → Quick win (30 min)
+      → Builds on BP-r94p
+
+   3. Consider BP-577b (tech-debt)
+      → May affect BP-r94p implementation
+   ```
+
+7. **Check environment (optional):**
+   ```
+   🔧 Environment Check:
+   ===================
+   ⚠️  PostgreSQL not running
+      Start with: docker-compose up -d postgres
+
+   ✅ Frontend dev server ready
+      Run: cd frontend && npm run dev
+
+   ✅ Backend hot reload ready
+      Run: cd backend && air
+   ```
+
+8. **Ask user:**
+   ```
+   Ready to code! Which task would you like to work on?
+   - Enter bean ID (e.g., BP-r94p)
+   - Or describe what you'd like to do
+   ```
+
+---
+
+### KICK-START vs WRAP-UP
+
+| Aspect | KICK-START | WRAP-UP |
+|--------|-----------|---------|
+| **Purpose** | Begin session | End session |
+| **Timing** | Start of work | End of work |
+| **Beans Action** | Query/list beans | Create/update beans |
+| **Git Action** | Check status | Commit changes |
+| **Output** | Task list, context | Commit summary |
+| **Frequency** | Once per session | Once per session |
+
+**Development Workflow:**
+```
+KICK-START → [Work on tasks] → WRAP-UP → [Break] → KICK-START → ...
+```
+
+---
+
+### Important Notes
+
+**When to use KICK-START:**
+- Starting a new development session
+- Returning from a break
+- Need to quickly get up to speed
+- Want to see what to work on next
+
+**What KICK-START provides:**
+- Full context from last session
+- Prioritized task list
+- Git status awareness
+- Environment readiness check
+- Actionable next steps
+
+**KICK-START is optional** - You can also just ask "What should I work on?" or "Show me the critical tasks"
