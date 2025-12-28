@@ -80,7 +80,7 @@ func CreateTestUser(t *testing.T, ctx context.Context) string {
 		ClerkUserID: TestClerkID,
 		Email:       userEmail,
 		Name:        utils.PgText("Test User"),
-		Currency:    utils.PgText("USD"),
+		Currency:    utils.PgText("PHP"),
 	})
 	if err != nil {
 		t.Fatalf("Failed to create test user: %v", err)
