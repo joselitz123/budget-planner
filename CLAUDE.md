@@ -205,6 +205,18 @@ Run `beans prime` to automatically:
 - Add `files_modified` if applicable
 - Add session date in bean body
 
+**⚠️ CRITICAL: Log ALL warnings, errors, and workarounds encountered:**
+- **Every warning** from type checking, linting, or build tools must have a bean created
+- **Every workaround** used to bypass an issue must be documented in a bean
+- **Every error** encountered (even if resolved) must be tracked with context
+- Include in bean body:
+  - Warning/error message text
+  - File and line number where it occurred
+  - Impact on functionality (critical/normal/low)
+  - Workaround or solution applied
+  - Future fix recommendations
+- This ensures no technical debt is lost and all issues are trackable
+
 **For bugs fixed:**
 - Create `bug` type bean with status `completed`
 - Document bug description and fix
@@ -292,6 +304,14 @@ Co-authored-by: Claude Sonnet <noreply@anthropic.com>
    ✅ Created BP-mfu9: Month Navigation (feature, completed)
    ✅ Updated BP-577b: Shadcn CLI workaround (bug, notes added)
    ✅ Created BP-xxxx: Loading States Bug (bug, completed)
+   ⚠️ Created BP-zyuo: CustomModal Accessibility Warnings (bug, low priority)
+      - Warning: Elements with 'dialog' role need tabindex value
+      - Warning: Click event handler needs keyboard event handler
+      - Workaround: Documented for future fix
+   ⚠️ Created BP-c2zk: tailwind-variants TypeScript Issue (bug, low priority)
+      - Issue: Type errors when passing className to tv()
+      - Workaround: Used string concatenation instead
+      - Files: spinner.svelte, skeleton.svelte
    ```
 
 2. **Check context:** "You were working in `frontend/src/routes/+layout.svelte`"
@@ -324,6 +344,7 @@ Co-authored-by: Claude Sonnet <noreply@anthropic.com>
 - ✅ Every technical debt discovered
 - ✅ Every testing task completed
 - ✅ Every documentation update
+- ✅ **EVERY warning, error, or workaround encountered** (CRITICAL - see WRAP-UP workflow)
 
 *Bean metadata requirements:*
 - `title` - Clear, actionable title

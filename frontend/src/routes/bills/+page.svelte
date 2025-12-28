@@ -2,7 +2,9 @@
 	import { formatCurrency, formatShortDate } from '$lib/utils/format';
 	import { unpaidBills } from '$lib/stores';
 	import { getCategoryById } from '$lib/stores/categories';
-	import { updateTransaction } from '$lib/stores/transactions';
+	import { updateTransaction, transactionsLoading } from '$lib/stores/transactions';
+	import { Spinner } from '$lib/components/ui/spinner';
+	import { Skeleton } from '$lib/components/ui/skeleton';
 	import type { Transaction } from '$lib/db/schema';
 
 	async function markAsPaid(bill: Transaction) {
@@ -30,31 +32,46 @@
 
 	<!-- Summary Cards -->
 	<div class="grid grid-cols-2 gap-4 mb-6">
-		<div
-			class="bg-paper-light dark:bg-paper-dark p-4 rounded-xl shadow-paper border border-line-light dark:border-line-dark"
-		>
-			<p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Total Due</p>
-			<h3 class="text-2xl font-bold font-display text-primary dark:text-white">
-				{formatCurrency(
-					$unpaidBills.reduce((sum: number, bill: any) => sum + bill.amount, 0)
-				)}
-			</h3>
-			<p class="text-xs text-red-500 mt-1">
-				{$unpaidBills.length} unpaid
-			</p>
-		</div>
-		<div
-			class="bg-paper-light dark:bg-paper-dark p-4 rounded-xl shadow-paper border border-line-light dark:border-line-dark"
-		>
-			<p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Paid This Month</p>
-			<h3 class="text-2xl font-bold font-display text-green-600 dark:text-green-400">
-				{formatCurrency(
-					$unpaidBills
-						.filter((b: any) => b.paid)
-						.reduce((sum: number, bill: any) => sum + bill.amount, 0)
-				)}
-			</h3>
-		</div>
+		{#if $transactionsLoading}
+			<div
+				class="bg-paper-light dark:bg-paper-dark p-4 rounded-xl shadow-paper border border-line-light dark:border-line-dark"
+			>
+				<Skeleton variant="text" className="h-4 w-20 mb-2" />
+				<Skeleton variant="card" className="h-8 w-full" />
+			</div>
+			<div
+				class="bg-paper-light dark:bg-paper-dark p-4 rounded-xl shadow-paper border border-line-light dark:border-line-dark"
+			>
+				<Skeleton variant="text" className="h-4 w-20 mb-2" />
+				<Skeleton variant="card" className="h-8 w-full" />
+			</div>
+		{:else}
+			<div
+				class="bg-paper-light dark:bg-paper-dark p-4 rounded-xl shadow-paper border border-line-light dark:border-line-dark"
+			>
+				<p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Total Due</p>
+				<h3 class="text-2xl font-bold font-display text-primary dark:text-white">
+					{formatCurrency(
+						$unpaidBills.reduce((sum: number, bill: any) => sum + bill.amount, 0)
+					)}
+				</h3>
+				<p class="text-xs text-red-500 mt-1">
+					{$unpaidBills.length} unpaid
+				</p>
+			</div>
+			<div
+				class="bg-paper-light dark:bg-paper-dark p-4 rounded-xl shadow-paper border border-line-light dark:border-line-dark"
+			>
+				<p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Paid This Month</p>
+				<h3 class="text-2xl font-bold font-display text-green-600 dark:text-green-400">
+					{formatCurrency(
+						$unpaidBills
+							.filter((b: any) => b.paid)
+							.reduce((sum: number, bill: any) => sum + bill.amount, 0)
+					)}
+				</h3>
+			</div>
+		{/if}
 	</div>
 
 	<!-- Bill List -->
@@ -70,8 +87,17 @@
 			<div class="w-4 h-2 bg-gradient-to-r from-gray-400 to-gray-200 rounded-full shadow-sm"></div>
 		</div>
 
-		<div class="pl-8 divide-y divide-line-light dark:divide-line-dark">
-			{#each $unpaidBills as bill}
+		<div class="pl-8">
+			{#if $transactionsLoading}
+				<div class="p-8 text-center">
+					<Spinner size="xl" color="primary" />
+					<p class="mt-4 text-gray-500 dark:text-gray-400 font-handwriting text-xl">
+						Loading bills...
+					</p>
+				</div>
+			{:else}
+				<div class="divide-y divide-line-light dark:divide-line-dark">
+					{#each $unpaidBills as bill}
 				<div
 					class="p-4 flex items-center justify-between group {bill.paid
 						? 'opacity-60'
@@ -128,6 +154,8 @@
 					<p class="text-sm mt-2">Your recurring bills will appear here</p>
 				</div>
 			{/each}
+				</div>
+			{/if}
 		</div>
 	</div>
 </div>
