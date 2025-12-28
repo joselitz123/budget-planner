@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { formatCurrency, formatMonthYear } from '$lib/utils/format';
 	import { currentMonthBudget, totalSpent, totalIncome } from '$lib/stores';
+	import { budgetsLoading } from '$lib/stores/budgets';
+	import { Skeleton } from '$lib/components/ui/skeleton';
 </script>
 
 <div class="space-y-6">
@@ -14,7 +16,40 @@
 		</p>
 	</div>
 
-	{#if $currentMonthBudget}
+	{#if $budgetsLoading}
+		<!-- Loading State - Skeleton -->
+		<section
+			class="bg-paper-light dark:bg-paper-dark rounded-xl shadow-paper border border-line-light dark:border-line-dark overflow-hidden mb-6"
+		>
+			<div
+				class="bg-primary dark:bg-gray-700 text-white p-3 flex justify-between items-center"
+			>
+				<h3 class="font-display font-semibold tracking-wide uppercase text-sm">
+					Budget Review
+				</h3>
+			</div>
+			<div class="p-4 grid grid-cols-2 gap-3 text-center">
+				<div class="border border-line-light dark:border-line-dark p-2 rounded-lg">
+					<Skeleton variant="card" className="h-12 w-full" />
+				</div>
+				<div class="border border-line-light dark:border-line-dark p-2 rounded-lg">
+					<Skeleton variant="card" className="h-12 w-full" />
+				</div>
+				<div class="border border-line-light dark:border-line-dark p-2 rounded-lg">
+					<Skeleton variant="card" className="h-12 w-full" />
+				</div>
+				<div class="border-2 p-2 rounded-lg">
+					<Skeleton variant="card" className="h-12 w-full" />
+				</div>
+			</div>
+		</section>
+
+		<section
+			class="bg-paper-light dark:bg-paper-dark rounded-xl shadow-paper border border-line-light dark:border-line-dark p-5"
+		>
+			<Skeleton variant="card" className="h-64 w-full" />
+		</section>
+	{:else if $currentMonthBudget}
 		<!-- Budget Review Card -->
 		<section
 			class="bg-paper-light dark:bg-paper-dark rounded-xl shadow-paper border border-line-light dark:border-line-dark overflow-hidden mb-6"

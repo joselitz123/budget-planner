@@ -3,8 +3,10 @@
 	import { formatCurrency, formatShortDate, getCategoryColor } from '$lib/utils/format';
 	import { filteredTransactions, totalSpent } from '$lib/stores';
 	import { getCategoryById } from '$lib/stores/categories';
-	import { addTransaction } from '$lib/stores/transactions';
+	import { addTransaction, transactionsLoading } from '$lib/stores/transactions';
 	import { showToast } from '$lib/stores/ui';
+	import { Skeleton } from '$lib/components/ui/skeleton';
+	import { Spinner } from '$lib/components/ui/spinner';
 	import AddExpenseModal from './AddExpenseModal.svelte';
 	import type { Transaction } from '$lib/db/schema';
 
@@ -36,22 +38,37 @@
 
 	<!-- Summary Cards -->
 	<div class="grid grid-cols-2 gap-4 mb-6">
-		<div
-			class="bg-paper-light dark:bg-paper-dark p-4 rounded-xl shadow-paper border border-line-light dark:border-line-dark"
-		>
-			<p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Total Spent</p>
-			<p class="text-2xl font-bold font-display text-primary dark:text-white">
-				{formatCurrency($totalSpent)}
-			</p>
-		</div>
-		<div
-			class="bg-paper-light dark:bg-paper-dark p-4 rounded-xl shadow-paper border border-line-light dark:border-line-dark"
-		>
-			<p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Transactions</p>
-			<p class="text-2xl font-bold font-display text-primary dark:text-white">
-				{$filteredTransactions.length}
-			</p>
-		</div>
+		{#if $transactionsLoading}
+			<div
+				class="bg-paper-light dark:bg-paper-dark p-4 rounded-xl shadow-paper border border-line-light dark:border-line-dark"
+			>
+				<Skeleton variant="text" className="h-4 w-20 mb-2" />
+				<Skeleton variant="card" className="h-8 w-full" />
+			</div>
+			<div
+				class="bg-paper-light dark:bg-paper-dark p-4 rounded-xl shadow-paper border border-line-light dark:border-line-dark"
+			>
+				<Skeleton variant="text" className="h-4 w-20 mb-2" />
+				<Skeleton variant="card" className="h-8 w-full" />
+			</div>
+		{:else}
+			<div
+				class="bg-paper-light dark:bg-paper-dark p-4 rounded-xl shadow-paper border border-line-light dark:border-line-dark"
+			>
+				<p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Total Spent</p>
+				<p class="text-2xl font-bold font-display text-primary dark:text-white">
+					{formatCurrency($totalSpent)}
+				</p>
+			</div>
+			<div
+				class="bg-paper-light dark:bg-paper-dark p-4 rounded-xl shadow-paper border border-line-light dark:border-line-dark"
+			>
+				<p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Transactions</p>
+				<p class="text-2xl font-bold font-display text-primary dark:text-white">
+					{$filteredTransactions.length}
+				</p>
+			</div>
+		{/if}
 	</div>
 
 	<!-- Transaction List -->
@@ -71,69 +88,78 @@
 
 		<!-- Table -->
 		<div class="pl-8 overflow-x-auto">
-			<table class="w-full text-left">
-				<thead>
-					<tr class="border-b-2 border-primary">
-						<th class="py-3 pl-4 pr-2 text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-							Date
-						</th>
-						<th class="py-3 px-2 text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-							Description
-						</th>
-						<th class="py-3 px-2 text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-							Category
-						</th>
-						<th class="py-3 px-2 text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 text-right">
-							Amount
-						</th>
-						<th class="py-3 px-2 text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 text-center">
-							Paid
-						</th>
-					</tr>
-				</thead>
-				<tbody class="text-sm font-hand text-lg">
-					{#each $filteredTransactions as transaction}
-						<tr
-							class="border-b border-line-light dark:border-line-dark hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-						>
-							<td class="pl-4 py-2 text-gray-600 dark:text-gray-300 whitespace-nowrap">
-								{formatShortDate(transaction.transactionDate)}
-							</td>
-							<td class="px-2 py-2 font-medium text-gray-800 dark:text-white">
-								{transaction.description || 'No description'}
-							</td>
-							<td class="px-2 py-2">
-								{#if getCategoryById(transaction.categoryId)}
+			{#if $transactionsLoading}
+				<div class="p-8 text-center">
+					<Spinner size="xl" color="primary" />
+					<p class="mt-4 text-gray-500 dark:text-gray-400 font-handwriting text-lg">
+						Loading transactions...
+					</p>
+				</div>
+			{:else}
+				<table class="w-full text-left">
+					<thead>
+						<tr class="border-b-2 border-primary">
+							<th class="py-3 pl-4 pr-2 text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+								Date
+							</th>
+							<th class="py-3 px-2 text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+								Description
+							</th>
+							<th class="py-3 px-2 text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+								Category
+							</th>
+							<th class="py-3 px-2 text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 text-right">
+								Amount
+							</th>
+							<th class="py-3 px-2 text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 text-center">
+								Paid
+							</th>
+						</tr>
+					</thead>
+					<tbody class="text-sm font-hand text-lg">
+						{#each $filteredTransactions as transaction}
+							<tr
+								class="border-b border-line-light dark:border-line-dark hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+							>
+								<td class="pl-4 py-2 text-gray-600 dark:text-gray-300 whitespace-nowrap">
+									{formatShortDate(transaction.transactionDate)}
+								</td>
+								<td class="px-2 py-2 font-medium text-gray-800 dark:text-white">
+									{transaction.description || 'No description'}
+								</td>
+								<td class="px-2 py-2">
 									{#if getCategoryById(transaction.categoryId)}
-										<span class="text-lg" title={getCategoryById(transaction.categoryId)?.name}>
-											{getCategoryById(transaction.categoryId)?.icon}
-										</span>
+										{#if getCategoryById(transaction.categoryId)}
+											<span class="text-lg" title={getCategoryById(transaction.categoryId)?.name}>
+												{getCategoryById(transaction.categoryId)?.icon}
+											</span>
+										{/if}
 									{/if}
-								{/if}
-							</td>
-							<td class="px-2 py-2 text-right font-bold text-gray-800 dark:text-white">
-								{formatCurrency(transaction.amount)}
-							</td>
-							<td class="px-2 py-2 text-center">
-								{#if transaction.paid}
-									<span class="material-icons-outlined text-green-500 text-sm">check_circle</span>
-								{:else}
-									<span class="material-icons-outlined text-gray-300 dark:text-gray-600 text-sm"
-										>radio_button_unchecked</span
-									>
-								{/if}
-							</td>
-						</tr>
-					{:else}
-						<tr>
-							<td colspan="5" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
-								<p class="font-handwriting text-xl">No transactions yet</p>
-								<p class="text-sm mt-2">Add your first expense to get started</p>
-							</td>
-						</tr>
-					{/each}
-				</tbody>
-			</table>
+								</td>
+								<td class="px-2 py-2 text-right font-bold text-gray-800 dark:text-white">
+									{formatCurrency(transaction.amount)}
+								</td>
+								<td class="px-2 py-2 text-center">
+									{#if transaction.paid}
+										<span class="material-icons-outlined text-green-500 text-sm">check_circle</span>
+									{:else}
+										<span class="material-icons-outlined text-gray-300 dark:text-gray-600 text-sm"
+											>radio_button_unchecked</span
+										>
+									{/if}
+								</td>
+							</tr>
+						{:else}
+							<tr>
+								<td colspan="5" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+									<p class="font-handwriting text-xl">No transactions yet</p>
+									<p class="text-sm mt-2">Add your first expense to get started</p>
+								</td>
+							</tr>
+						{/each}
+					</tbody>
+				</table>
+			{/if}
 		</div>
 	</div>
 

@@ -17,6 +17,9 @@ let USE_API = true;
 // All transactions
 export const transactions = writable<Transaction[]>([]);
 
+// Transaction loading state
+export const transactionsLoading = writable<boolean>(false);
+
 // Filter settings
 export const filterCategory = writable<string | null>(null);
 export const filterPaid = writable<boolean | null>(null);
@@ -75,34 +78,38 @@ export const unpaidBills = derived(currentBudgetTransactions, ($transactions) =>
  * Load transactions from API (with IndexedDB fallback)
  */
 export async function loadTransactions(): Promise<void> {
-	// Try API first if enabled
-	if (USE_API) {
-		try {
-			const apiTransactions = await transactionsApi.getTransactions();
+	transactionsLoading.set(true);
 
-			// Update store
-			transactions.set(apiTransactions);
-
-			// Update IndexedDB for offline access
-			for (const transaction of apiTransactions) {
-				await transactionStore.update(transaction);
-			}
-
-			console.log(`[Transactions] Loaded ${apiTransactions.length} transactions from API`);
-			return;
-		} catch (error) {
-			console.warn('[Transactions] API load failed, falling back to IndexedDB:', error);
-			// Fall through to IndexedDB loading
-		}
-	}
-
-	// Fallback to IndexedDB
 	try {
+		// Try API first if enabled
+		if (USE_API) {
+			try {
+				const apiTransactions = await transactionsApi.getTransactions();
+
+				// Update store
+				transactions.set(apiTransactions);
+
+				// Update IndexedDB for offline access
+				for (const transaction of apiTransactions) {
+					await transactionStore.update(transaction);
+				}
+
+				console.log(`[Transactions] Loaded ${apiTransactions.length} transactions from API`);
+				return;
+			} catch (error) {
+				console.warn('[Transactions] API load failed, falling back to IndexedDB:', error);
+				// Fall through to IndexedDB loading
+			}
+		}
+
+		// Fallback to IndexedDB
 		const allTransactions = await transactionStore.getAll();
 		transactions.set(allTransactions);
 		console.log(`[Transactions] Loaded ${allTransactions.length} transactions from IndexedDB`);
 	} catch (error) {
-		console.error('[Transactions] Error loading transactions from IndexedDB:', error);
+		console.error('[Transactions] Error loading transactions:', error);
+	} finally {
+		transactionsLoading.set(false);
 	}
 }
 

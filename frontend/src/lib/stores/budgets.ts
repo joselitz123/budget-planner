@@ -16,6 +16,9 @@ let USE_API = true;
 // All budgets
 export const budgets = writable<Budget[]>([]);
 
+// Budget loading state
+export const budgetsLoading = writable<boolean>(false);
+
 // Current budget (for selected month)
 export const currentBudget = writable<Budget | null>(null);
 
@@ -40,44 +43,48 @@ export const allMonths = derived(budgets, ($budgets) => {
  * Load budgets from API (with IndexedDB fallback)
  */
 export async function loadBudgets(): Promise<void> {
-	// Try API first if enabled
-	if (USE_API) {
-		try {
-			const apiBudgets = await budgetsApi.getAllBudgets();
+	budgetsLoading.set(true);
 
-			// Convert API response to Budget type
-			const budgetsData: Budget[] = apiBudgets.map(b => ({
-				id: b.id,
-				userId: b.userId,
-				month: b.month.substring(0, 7), // Convert YYYY-MM-DD to YYYY-MM
-				totalLimit: b.totalLimit,
-				createdAt: b.createdAt,
-				updatedAt: b.updatedAt
-			}));
-
-			// Update store
-			budgets.set(budgetsData);
-
-			// Update IndexedDB for offline access
-			for (const budget of budgetsData) {
-				await budgetStore.update(budget);
-			}
-
-			console.log(`[Budgets] Loaded ${budgetsData.length} budgets from API`);
-			return;
-		} catch (error) {
-			console.warn('[Budgets] API load failed, falling back to IndexedDB:', error);
-			// Fall through to IndexedDB loading
-		}
-	}
-
-	// Fallback to IndexedDB
 	try {
+		// Try API first if enabled
+		if (USE_API) {
+			try {
+				const apiBudgets = await budgetsApi.getAllBudgets();
+
+				// Convert API response to Budget type
+				const budgetsData: Budget[] = apiBudgets.map(b => ({
+					id: b.id,
+					userId: b.userId,
+					month: b.month.substring(0, 7), // Convert YYYY-MM-DD to YYYY-MM
+					totalLimit: b.totalLimit,
+					createdAt: b.createdAt,
+					updatedAt: b.updatedAt
+				}));
+
+				// Update store
+				budgets.set(budgetsData);
+
+				// Update IndexedDB for offline access
+				for (const budget of budgetsData) {
+					await budgetStore.update(budget);
+				}
+
+				console.log(`[Budgets] Loaded ${budgetsData.length} budgets from API`);
+				return;
+			} catch (error) {
+				console.warn('[Budgets] API load failed, falling back to IndexedDB:', error);
+				// Fall through to IndexedDB loading
+			}
+		}
+
+		// Fallback to IndexedDB
 		const allBudgets = await budgetStore.getAll();
 		budgets.set(allBudgets);
 		console.log(`[Budgets] Loaded ${allBudgets.length} budgets from IndexedDB`);
 	} catch (error) {
-		console.error('[Budgets] Error loading budgets from IndexedDB:', error);
+		console.error('[Budgets] Error loading budgets:', error);
+	} finally {
+		budgetsLoading.set(false);
 	}
 }
 

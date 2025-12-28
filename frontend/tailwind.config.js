@@ -25,6 +25,15 @@ export default {
 			backgroundImage: {
 				'paper-pattern':
 					"url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMSIgY3k9IjEiIHI9IjEiIGZpbGw9IiM5OTkiIGZpbGwtb3BhY2l0eT0iMC4wMyIvPjwvc3ZnPg==')"
+			},
+			keyframes: {
+				shimmer: {
+					'0%': { backgroundPosition: '-1000px 0' },
+					'100%': { backgroundPosition: '1000px 0' }
+				}
+			},
+			animation: {
+				shimmer: 'shimmer 2s infinite linear'
 			}
 		}
 	},
