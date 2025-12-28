@@ -176,29 +176,41 @@ npm run build                    # Production build
 
 ---
 
-## WRAP-UP Workflow
+## WRAP-UP Workflow (Integrated with Beans)
 
 When you mention the keyword **"WRAP-UP"**, I will:
 
-### 1. Log Progress to Nearest todo.md
+### 0. Run Beans Prime (Automatic)
 
-**Determine "nearest" todo.md:**
-- If working in `/workspace/budget-planner/backend/*` → Update `backend/todo.md`
-- If working in `/workspace/budget-planner/frontend/*` → Update `frontend/todo.md`
-- If working in root or ambiguous → Update `backend/todo.md` (default)
+Run `beans prime` to automatically:
+- Query recent work and context
+- Prepare bean creation/update
+- Track files modified in session
+- Identify technical debts introduced
 
-**What to log:**
-- **Session Summary:** What was accomplished in this session
-- **Technical Debts:** Known issues, code that needs refactoring, temporary workarounds
-- **Warnings:** Non-blocking issues that should be addressed
-- **Workarounds:** Temporary solutions with notes on proper implementation needed
-- **Files Modified:** List of all files changed in this session
+### 1. Create/Update Beans for Session Work
 
-**Format (match existing todo.md style):**
-- Backend: Session-based with date, status badges (✅⚠️❌)
-- Frontend: Priority-based (Priority 1-4) with effort estimates
+**For each feature/bug completed:**
+- Create new bean or update existing open bean
+- Set status to `completed` with completion date
+- Add labels: `[completed]`, `[frontend|backend]`, feature area
+- Populate `files_modified` list in bean body
+- Add session date in bean body
+- Link related beans (dependencies, blockers)
 
-### 2. Update Nearest CLAUDE.md (If Applicable)
+**For technical debts discovered:**
+- Create `bug` type bean for technical debt
+- Set priority (normal/low based on impact)
+- Document problem and workaround used
+- Add `files_modified` if applicable
+- Add session date in bean body
+
+**For bugs fixed:**
+- Create `bug` type bean with status `completed`
+- Document bug description and fix
+- Link to feature bean if applicable
+
+### 2. Update CLAUDE.md (If Applicable)
 
 **When to update:**
 - New architectural patterns introduced
@@ -210,7 +222,7 @@ When you mention the keyword **"WRAP-UP"**, I will:
 - Routine bug fixes
 - Feature implementations following existing patterns
 - Test updates
-- Documentation improvements
+- Beans now tracks progress automatically
 
 ### 3. Check .gitignore for Security Files
 
@@ -231,79 +243,73 @@ When you mention the keyword **"WRAP-UP"**, I will:
 
 ### 4. Commit and Push Changes
 
-**Commit message format:**
+**Commit message format (enhanced with Beans):**
 ```
-feat/fix/docs: brief description
+{type}: {title}
 
-- Detailed change 1
-- Detailed change 2
-- Technical debt: [if applicable]
-- Workaround: [if applicable]
+- Bean: {bean_id}
+- Session: {session_date}
+- Files: {files_modified}
+
+Co-authored-by: Claude Sonnet <noreply@anthropic.com>
+```
+
+**Example:**
+```
+feat(frontend): implement month navigation
+
+- Bean: BP-mfu9
+- Session: 2025-12-28
+- Files: frontend/src/routes/+layout.svelte, frontend/src/lib/stores/budgets.ts
+
+- Implemented prev/next month buttons
+- Updated currentMonth store
+- Added data reload on month change
 
 Co-authored-by: Claude Sonnet <noreply@anthropic.com>
 ```
 
 **Steps:**
-1. `git add` all changed files
-2. Show brief summary: files changed + commit message
-3. `git commit` with meaningful message
-4. `git push` to current branch
-5. Display commit SHA for reference
+1. `beans prime` - Review beans created/updated
+2. `git add` all changed files
+3. Show brief summary: beans created/updated + files changed + commit message
+4. `git commit` with bean-enhanced message
+5. `git push` to current branch
+6. Display commit SHA for reference
 
 **Note:** This will be automatic after showing the summary (no confirmation needed per user preference).
 
 ---
 
-### Example WRAP-UP Session
+### WRAP-UP Example Session
 
 **User says:** "WRAP-UP"
 
 **I will:**
 
-1. **Identify context:** "You were working in `frontend/src/routes/transactions/`"
-
-2. **Log to `frontend/todo.md`:**
-   ```markdown
-   ## Session: Transaction Modal Implementation (2025-12-27)
-
-   ### Completed ✅
-   - [x] AddExpenseModal component with 8 form fields
-   - [x] Form validation with inline error messages
-   - [x] Budget auto-creation functionality
-   - [x] FAB button integration
-
-   ### Technical Debts ⚠️
-   - Shadcn-Svelte CLI unavailable (requires TTY) - components created manually
-   - bits-ui Dialog had type issues - created CustomModal instead
-   - Simplified type definitions to avoid svelte/elements import conflicts
-
-   ### Workarounds 🔧
-   - Manual component creation instead of CLI
-   - CustomModal instead of bits-ui Dialog
-   - Simplified types (less type-safe but functional)
-
-   ### Files Modified
-   - frontend/src/routes/transactions/AddExpenseModal.svelte
-   - frontend/src/lib/components/ui/CustomModal.svelte
-   - frontend/src/lib/stores/budgets.ts
-
-   ### Next Steps
-   - Backend API integration
-   - Month navigation
-   - Mark bill paid functionality
+1. **Run `beans prime`** and review beans:
+   ```
+   ✅ Created BP-mfu9: Month Navigation (feature, completed)
+   ✅ Updated BP-577b: Shadcn CLI workaround (bug, notes added)
+   ✅ Created BP-xxxx: Loading States Bug (bug, completed)
    ```
 
-3. **Check `frontend/CLAUDE.md`:** No update needed (following existing patterns)
+2. **Check context:** "You were working in `frontend/src/routes/+layout.svelte`"
 
-4. **Verify `.gitignore`:**
+3. **Verify `.gitignore`:**
    - ✅ `.env` already ignored
    - ✅ `*.key` already ignored
    - ✅ No new security files created
 
-5. **Commit and push:**
+4. **Commit with bean metadata:**
    ```bash
-   git add frontend/src/routes/transactions/AddExpenseModal.svelte
-   git commit -m "feat(frontend): implement Transaction Modal with form validation"
+   git add .
+   git commit -m "feat(frontend): implement month navigation
+
+   - Bean: BP-mfu9
+   - Session: 2025-12-28
+
+   Co-authored-by: Claude Sonnet <noreply@anthropic.com>"
    git push origin iteration/1
    ```
 
@@ -311,30 +317,50 @@ Co-authored-by: Claude Sonnet <noreply@anthropic.com>
 
 ### Important Notes
 
-**Context Detection:**
-- I will use the most recently modified files to determine the "nearest" todo.md
-- If ambiguous, I will ask you to clarify which todo.md to update
+**Bean Creation Rules:**
 
-**What to Include in todo.md:**
+*When to create beans:*
+- ✅ Every feature/bug fix/enhancement completed
+- ✅ Every technical debt discovered
+- ✅ Every testing task completed
+- ✅ Every documentation update
 
-*Technical Debts:*
-- Code that needs refactoring
-- Performance issues identified
-- Security concerns (non-critical)
-- Missing error handling
-- Hardcoded values that should be configurable
+*Bean metadata requirements:*
+- `title` - Clear, actionable title
+- `type` - One of: feature, bug, task, milestone, epic
+- `status` - todo, in-progress, completed
+- `priority` - critical, high, normal, low, deferred
+- `tags` - At minimum: [frontend|backend], [feature-area]
+- `body` - Include effort estimate, files modified, session date
 
-*Warnings:*
-- Deprecated patterns used
-- Temporary solutions with expiration
-- Known bugs that don't block functionality
-- Accessibility issues (non-blocking)
+*Technical Debt beans:*
+- Always create when workaround used
+- Include problem description
+- Include workaround details
+- Suggest proper solution if known
+- Set priority based on impact
 
-*Workarounds:*
-- Temporary fixes with proper solution noted
-- Third-party library limitations and workarounds
-- Development vs production differences
-- Missing features and their temporary replacements
+**Useful Beans Commands:**
+
+```bash
+# Show open beans by priority
+beans list --status todo
+
+# Show frontend tasks
+beans list --tag frontend
+
+# Show technical debts
+beans list --tag tech-debt
+
+# Start working on a bean
+beans update <bean-id> --status in-progress
+
+# Complete a bean
+beans update <bean-id> --status completed
+
+# Archive old beans
+beans archive
+```
 
 **Security Checks - Always verify:**
 - No `.env` files committed

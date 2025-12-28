@@ -14,6 +14,11 @@ This file provides comprehensive guidance for Claude Code when working with the 
 
 **Current Status:** All 10 handlers implemented with 100% test coverage (48/48 tests passing)
 
+**Task Tracking:** Migrated to Beans system (see `.beans/` directory)
+- Legacy `todo.md` file preserved as `todo.md.legacy`
+- All backend tasks now tracked via Beans CLI
+- Use `beans list --tag backend` to view backend tasks
+
 ---
 
 ## Quick Commands
@@ -252,7 +257,9 @@ backend/
 
 ## Important Files
 
-- `todo.md` - Implementation status and session history (renamed from TASK.md)
+- `todo.md.legacy` - Implementation status and session history (preserved for reference, superseded by Beans)
+- `.beans/` - Beans task management system (current task tracking)
+- `.beans.yml` - Beans configuration file (root directory)
 - `starting-point.md` (root) - Full project specification
 - `CLAUDE.md` (root) - Project-level documentation
 - `internal/handlers/*.go` - All 10 handlers

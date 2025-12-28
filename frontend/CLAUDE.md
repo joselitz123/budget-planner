@@ -14,7 +14,12 @@ This file provides comprehensive guidance for Claude Code when working with the 
 - IndexedDB (via `idb` library) - Offline storage
 - Clerk - Authentication
 
-**Current Status:** ~75% complete - See `todo.md` for detailed implementation status
+**Current Status:** ~75% complete
+
+**Task Tracking:** Migrated to Beans system (see `.beans/` directory)
+- Use `beans list --tag frontend` to view frontend tasks
+- Use `beans list --priority critical` to view high-priority tasks
+- Legacy `todo.md` preserved as `todo.md.legacy` for reference
 
 ---
 
@@ -106,7 +111,7 @@ npm run pwa:generate-icons
 - ⚠️ Settings page
 - ⚠️ Full offline sync testing
 
-**See `todo.md` for detailed remaining tasks and next steps.**
+**See Beans (`.beans/` directory) for detailed remaining tasks and next steps.**
 
 ---
 
@@ -488,7 +493,9 @@ PUBLIC_MAX_OFFLINE_OPERATIONS=100
 
 ## Important Files
 
-- **`todo.md`** - **⭐ Implementation status and remaining tasks - START HERE**
+- **`.beans/`** - **⭐ Beans task management system - current task tracking - START HERE**
+- `todo.md.legacy` - Implementation status (preserved for reference, superseded by Beans)
+- `.beans.yml` - Beans configuration file (root directory)
 - **`CLAUDE.md`** (root) - Project-level documentation
 - **`backend/CLAUDE.md`** - Backend development guide
 - **`ui-page-inspiration.md`** - UI design inspiration with HTML/CSS examples

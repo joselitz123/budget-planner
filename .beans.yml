@@ -1,0 +1,166 @@
+# Beans Configuration for Budget Planner Project
+
+beans:
+  path: .beans
+  prefix: "BP-"
+  id_length: 4
+  default_status: open
+  default_type: feature
+
+project:
+  name: "Budget Planner PWA"
+  description: "Offline-first Progressive Web App for budget management"
+  version: "1.0.0"
+
+# Custom bean types for Budget Planner
+types:
+  - name: "feature"
+    singular: "Feature"
+    plural: "Features"
+    icon: "✨"
+    color: "#3b82f6"
+    description: "New functionality and features"
+
+  - name: "bug"
+    singular: "Bug"
+    plural: "Bugs"
+    icon: "🐛"
+    color: "#ef4444"
+    description: "Bug fixes and defect resolution"
+
+  - name: "enhancement"
+    singular: "Enhancement"
+    plural: "Enhancements"
+    icon: "🚀"
+    color: "#8b5cf6"
+    description: "Improvements to existing functionality"
+
+  - name: "tech-debt"
+    singular: "Technical Debt"
+    plural: "Technical Debts"
+    icon: "⚠️"
+    color: "#f59e0b"
+    description: "Code refactoring and technical debt items"
+
+  - name: "documentation"
+    singular: "Documentation"
+    plural: "Documentation"
+    icon: "📚"
+    color: "#10b981"
+    description: "Documentation and guide updates"
+
+  - name: "testing"
+    singular: "Test"
+    plural: "Tests"
+    icon: "🧪"
+    color: "#06b6d4"
+    description: "Testing and quality assurance"
+
+  - name: "chore"
+    singular: "Chore"
+    plural: "Chores"
+    icon: "🔧"
+    color: "#6b7280"
+    description: "Maintenance and routine tasks"
+
+# Priority levels (mapped from frontend Priority 1-4)
+priorities:
+  - name: "critical"
+    level: 1
+    label: "Critical"
+    color: "#dc2626"
+    description: "Blocks release or essential functionality (Frontend Priority 1)"
+
+  - name: "high"
+    level: 2
+    label: "High"
+    color: "#ea580c"
+    description: "Important but not blocking (Frontend Priority 2)"
+
+  - name: "medium"
+    level: 3
+    label: "Medium"
+    color: "#d97706"
+    description: "Standard priority task (Frontend Priority 3)"
+
+  - name: "low"
+    level: 4
+    label: "Low"
+    color: "#65a30d"
+    description: "Nice to have, can defer (Frontend Priority 4)"
+
+# Labels for categorization
+labels:
+  # Frontend/Backend distinction
+  - name: "frontend"
+    color: "#ec4899"
+    description: "Frontend (SvelteKit) work"
+
+  - name: "backend"
+    color: "#3b82f6"
+    description: "Backend (Go) work"
+
+  # Feature areas
+  - name: "auth"
+    color: "#8b5cf6"
+    description: "Authentication and authorization"
+
+  - name: "database"
+    color: "#06b6d4"
+    description: "Database schema and queries"
+
+  - name: "api"
+    color: "#f59e0b"
+    description: "API endpoints and handlers"
+
+  - name: "testing"
+    color: "#10b981"
+    description: "Unit and integration tests"
+
+  # Frontend-specific
+  - name: "ui"
+    color: "#ec4899"
+    description: "UI components and styling"
+
+  - name: "pwa"
+    color: "#6366f1"
+    description: "PWA features (offline, service worker)"
+
+  - name: "sync"
+    color: "#14b8a6"
+    description: "Offline sync functionality"
+
+  - name: "indexeddb"
+    color: "#0d9488"
+    description: "IndexedDB operations"
+
+  # Status indicators
+  - name: "blocked"
+    color: "#dc2626"
+    description: "Blocked by dependency"
+
+  - name: "in-progress"
+    color: "#eab308"
+    description: "Currently being worked on"
+
+  - name: "review-needed"
+    color: "#8b5cf6"
+    description: "Awaiting code review"
+
+# Effort estimation tracking
+effort:
+  enabled: true
+  units: ["hours", "days"]
+  default: "hours"
+
+# Archive configuration
+archive:
+  auto_archive: true
+  completed_after: "30d"
+  keep_metadata: true
+
+# Git integration
+git:
+  enabled: true
+  auto_commit: false
+  branch: "iteration/1"
