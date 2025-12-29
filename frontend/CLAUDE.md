@@ -101,6 +101,7 @@ npm run pwa:generate-icons
 - ✅ Expense Tracker page with transaction list
 - ✅ Bill Payment page with status tracking
 - ✅ Transaction Modal with form validation
+- ✅ Budget Sharing feature with invitations
 - ✅ Type checking: 0 errors, 0 warnings
 - ✅ Build successful
 
@@ -236,6 +237,65 @@ PUBLIC_CLERK_SIGN_UP_URL=/sign-up
 PUBLIC_CLERK_AFTER_SIGN_IN_URL=/dashboard
 PUBLIC_CLERK_AFTER_SIGN_UP_URL=/dashboard
 ```
+
+### Budget Sharing
+
+**Pattern:**
+The budget sharing feature allows users to invite collaborators to their budgets with different permission levels.
+
+**API Client** (`src/lib/api/shares.ts`):
+```typescript
+import { sharesApi } from '$lib/api/shares';
+
+// Create invitation
+await sharesApi.createInvitation({
+  budgetId: 'budget-uuid',
+  recipientEmail: 'friend@example.com',
+  permission: 'view' // or 'edit'
+});
+
+// Get pending invitations
+const invitations = await sharesApi.getMyInvitations();
+
+// Respond to invitation
+await sharesApi.respondToInvitation(invitationId, { status: 'accepted' });
+
+// Get shared budgets
+const shared = await sharesApi.getSharedBudgets();
+
+// Get who has access to a budget
+const accessList = await sharesApi.getBudgetSharing(budgetId);
+
+// Remove access
+await sharesApi.removeAccess(accessId);
+```
+
+**State Management** (`src/lib/stores/shares.ts`):
+```typescript
+import {
+  invitations,
+  pendingInvitations,
+  sharedBudgets,
+  loadInvitations,
+  loadSharedBudgets,
+  createInvitation,
+  respondToInvitation
+} from '$lib/stores/shares';
+```
+
+**Components:**
+- `ShareBudgetDialog.svelte` - Modal for inviting users
+- `InvitationList.svelte` - List of pending invitations
+- `SharedBudgetCard.svelte` - Card displaying shared budget
+
+**Permission Levels:**
+- `view` - Read-only access
+- `edit` - Can modify transactions and categories
+
+**Manual Notification Flow:**
+- Invitations are stored in database but emails are NOT sent
+- Owner must manually notify recipient to check the app
+- Recipient visits `/shared` route to see pending invitations
 
 ---
 
@@ -510,6 +570,8 @@ frontend/
 ├── src/
 │   ├── lib/
 │   │   ├── components/        # UI components (Button, Input, CustomModal, etc.)
+│   │   │   ├── ui/             # Shadcn-Svelte base components
+│   │   │   └── sharing/        # Budget sharing components
 │   │   ├── stores/            # Svelte stores for state management
 │   │   ├── db/                # IndexedDB client setup
 │   │   ├── api/               # API client functions
@@ -517,6 +579,7 @@ frontend/
 │   ├── routes/                # SvelteKit file-based routing
 │   │   ├── +layout.svelte      # Root layout with navigation
 │   │   ├── +page.svelte        # Budget Overview page
+│   │   ├── shared/            # Shared budgets page
 │   │   ├── transactions/       # Expense Tracker + AddExpenseModal
 │   │   └── bills/              # Bill Payment page
 │   └── app.html               # HTML template
