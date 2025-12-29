@@ -42,3 +42,31 @@ export function isValidDateRange(startDate: Date, endDate: Date): boolean {
 export function isWithinBudget(spent: number, limit: number): boolean {
 	return spent <= limit;
 }
+
+/**
+ * Validate payment method name
+ */
+export function isValidPaymentMethodName(name: string): boolean {
+	return isRequired(name) && name.length >= 2 && name.length <= 100;
+}
+
+/**
+ * Validate last 4 digits (exactly 4 digits)
+ */
+export function isValidLastFour(lastFour: string): boolean {
+	return /^\d{4}$/.test(lastFour);
+}
+
+/**
+ * Validate credit limit (positive number)
+ */
+export function isValidCreditLimit(limit: number): boolean {
+	return limit > 0;
+}
+
+/**
+ * Validate payment method type
+ */
+export function isValidPaymentMethodType(type: string): boolean {
+	return ['credit_card', 'debit_card', 'cash', 'ewallet'].includes(type);
+}

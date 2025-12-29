@@ -75,8 +75,13 @@ export interface PaymentMethod {
 	id: string;
 	userId: string;
 	name: string;
-	type: string;
+	type: 'credit_card' | 'debit_card' | 'cash' | 'ewallet';
+	lastFour: string | null;
+	brand: string | null;
 	isDefault: boolean;
+	isActive: boolean;
+	creditLimit: number | null;
+	currentBalance: number | null;
 	createdAt: string;
 	updatedAt: string;
 }
@@ -123,7 +128,7 @@ export interface BudgetDB {
 	paymentMethods: {
 		key: string;
 		value: PaymentMethod;
-		indexes: { 'by-user': string };
+		indexes: { 'by-user': string; 'by-type': string };
 	};
 	syncQueue: {
 		key: string;

@@ -9,6 +9,8 @@
 	import { allCategories } from '$lib/stores/categories';
 	import { currentBudget } from '$lib/stores/budgets';
 	import { createBudgetForCurrentMonth } from '$lib/stores/budgets';
+	import { activePaymentMethods } from '$lib/stores/paymentMethods';
+	import PaymentMethodSelector from '$lib/components/payment/PaymentMethodSelector.svelte';
 	import type { Transaction } from '$lib/db/schema';
 	import { isValidAmount, isRequired } from '$lib/utils/validation';
 
@@ -25,6 +27,7 @@
 	let isRecurring = false;
 	let dueDate = '';
 	let notes = '';
+	let paymentMethodId: string | null = null;
 
 	// Form errors
 	let errors = {
@@ -48,6 +51,7 @@
 		isRecurring = false;
 		dueDate = '';
 		notes = '';
+		paymentMethodId = null;
 		errors = { amount: '', date: '', description: '', category: '' };
 	}
 
@@ -110,7 +114,7 @@
 				description,
 				transactionDate: date,
 				transactionType: 'expense',
-				paymentMethodId: null,
+				paymentMethodId: paymentMethodId,
 				paid: false,
 				dueDate: isRecurring && dueDate ? dueDate : null,
 				isRecurring,
@@ -192,6 +196,16 @@
 			{#if errors.category}
 				<p class="text-sm text-red-500 dark:text-red-400">{errors.category}</p>
 			{/if}
+		</div>
+
+		<!-- Payment Method -->
+		<div class="space-y-2">
+			<Label for="paymentMethod">Payment Method</Label>
+			<PaymentMethodSelector
+				bind:selectedId={paymentMethodId}
+				paymentMethods={$activePaymentMethods}
+				onChange={(id) => (paymentMethodId = id)}
+			/>
 		</div>
 
 		<!-- Is Recurring -->
