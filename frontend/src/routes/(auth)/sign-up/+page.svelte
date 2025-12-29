@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { Clerk } from '@clerk/clerk-js';
+	import ClerkJs from '@clerk/clerk-js';
 
-	let clerk: Clerk | null = null;
+	let clerk: typeof ClerkJs | null = null;
 	let container: HTMLDivElement;
 	let error: string | null = null;
 	let loading = true;

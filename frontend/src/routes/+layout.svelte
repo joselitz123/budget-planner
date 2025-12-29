@@ -8,9 +8,9 @@
 	import { initTheme, showToast } from '$lib/stores/ui';
 	import { isOnline, syncIndicator } from '$lib/stores/offline';
 	import { ToastContainer } from '$lib/components/ui/toast';
-	import { Clerk } from '@clerk/clerk-js';
+	import ClerkJs from '@clerk/clerk-js';
 
-	let clerk: Clerk | null = null;
+	let clerk: typeof ClerkJs | null = null;
 	let showUserMenu = false;
 
 	// Close user menu when clicking outside

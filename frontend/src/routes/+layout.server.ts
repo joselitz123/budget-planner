@@ -5,6 +5,15 @@ export const load: LayoutServerLoad = async (event) => {
 	// Get auth state from hooks.server.ts
 	const { userId, session } = event.locals;
 
+	// Skip auth check for auth routes (sign-in, sign-up)
+	const url = event.url.pathname;
+	if (url.startsWith('/sign-in') || url.startsWith('/sign-up')) {
+		return {
+			userId,
+			session
+		};
+	}
+
 	// Redirect to sign-in if not authenticated
 	if (!userId) {
 		throw redirect(302, '/sign-in');
