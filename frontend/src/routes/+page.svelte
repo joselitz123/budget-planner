@@ -3,17 +3,33 @@
 	import { currentMonthBudget, totalSpent, totalIncome } from '$lib/stores';
 	import { budgetsLoading } from '$lib/stores/budgets';
 	import { Skeleton } from '$lib/components/ui/skeleton';
+	import { Button } from '$lib/components/ui/button';
+	import ShareBudgetDialog from '$lib/components/sharing/ShareBudgetDialog.svelte';
+
+	let shareDialogOpen = false;
 </script>
 
 <div class="space-y-6">
 	<!-- Page Header -->
-	<div class="mb-6">
-		<h2 class="text-3xl font-display font-bold text-primary dark:text-white mb-2">
-			Budget Overview
-		</h2>
-		<p class="text-sm text-gray-500 dark:text-gray-400 italic">
-			"Classify and summarize expenditures."
-		</p>
+	<div class="mb-6 flex justify-between items-start">
+		<div>
+			<h2 class="text-3xl font-display font-bold text-primary dark:text-white mb-2">
+				Budget Overview
+			</h2>
+			<p class="text-sm text-gray-500 dark:text-gray-400 italic">
+				"Classify and summarize expenditures."
+			</p>
+		</div>
+		{#if $currentMonthBudget}
+			<Button
+				onclick={() => (shareDialogOpen = true)}
+				aria-label="Share this budget"
+				class="shrink-0"
+			>
+				<span class="material-icons-outlined text-sm mr-1">share</span>
+				Share
+			</Button>
+		{/if}
 	</div>
 
 	{#if $budgetsLoading}
@@ -181,3 +197,11 @@
 		</section>
 	{/if}
 </div>
+
+{#if $currentMonthBudget}
+	<ShareBudgetDialog
+		bind:open={shareDialogOpen}
+		budgetId={$currentMonthBudget.id}
+		budgetName={formatMonthYear(new Date($currentMonthBudget.month + '-01'))}
+	/>
+{/if}

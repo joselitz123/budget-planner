@@ -155,6 +155,15 @@
 				<span class="text-[10px] mt-1">Analytics</span>
 			</a>
 			<a
+				href="/shared"
+				class="flex flex-col items-center {$page.url.pathname === '/shared'
+					? 'text-primary dark:text-white'
+					: 'text-gray-400 dark:text-gray-500'}"
+			>
+				<span class="material-icons-outlined">folder_shared</span>
+				<span class="text-[10px] mt-1">Shared</span>
+			</a>
+			<a
 				href="/bills"
 				class="flex flex-col items-center {$page.url.pathname === '/bills'
 					? 'text-primary dark:text-white'
