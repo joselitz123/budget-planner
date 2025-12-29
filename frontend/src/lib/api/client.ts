@@ -1,5 +1,6 @@
 import type { ApiResponse } from '$lib/db/schema';
 import { showToast } from '$lib/stores/ui';
+import { ClerkTokenProvider } from '$lib/auth/clerkProvider';
 
 /**
  * Authentication token provider interface
@@ -236,7 +237,13 @@ export class ApiClient {
 }
 
 // Export singleton instance
-export const apiClient = new ApiClient();
+// Development switch: use dev provider when VITE_DEV_AUTH_PROVIDER=dev
+// Use ClerkTokenProvider when set to 'clerk' or unset
+const authProvider = import.meta.env.VITE_DEV_AUTH_PROVIDER === 'dev'
+	? devTokenProvider
+	: new ClerkTokenProvider();
+
+export const apiClient = new ApiClient(undefined, authProvider);
 
 /**
  * Helper function to set dev JWT token for testing

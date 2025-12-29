@@ -1,11 +1,11 @@
 ---
 # BP-py6h
 title: Payment Methods UI
-status: open
+status: completed
 type: feature
 priority: normal
 created_at: 2025-12-28T16:51:52Z
-updated_at: 2025-12-28T16:51:52Z
+updated_at: 2025-12-29T05:19:19Z
 ---
 
 Create UI for managing payment methods (credit cards, debit cards, cash, e-wallets).
@@ -14,13 +14,13 @@ Create UI for managing payment methods (credit cards, debit cards, cash, e-walle
 Backend has full payment methods API but no frontend UI exists. Transactions need payment methods for better tracking.
 
 ## Acceptance Criteria
-- [ ] Payment methods list page
-- [ ] Add/Edit payment method dialog
-- [ ] Payment method type selector (card/cash/ewallet)
-- [ ] Show last 4 digits, brand for cards
-- [ ] Set default payment method
-- [ ] Deactivate payment methods (soft delete)
-- [ ] Link payment methods to transactions
+- [x] Payment methods list page
+- [x] Add/Edit payment method dialog
+- [x] Payment method type selector (card/cash/ewallet)
+- [x] Show last 4 digits, brand for cards
+- [x] Set default payment method
+- [x] Deactivate payment methods (soft delete)
+- [x] Link payment methods to transactions
 
 ## Technical Details
 
@@ -45,16 +45,18 @@ Backend has full payment methods API but no frontend UI exists. Transactions nee
 - Filter transactions by payment method
 - Show payment method icon in transaction list
 
-### Files to Create
+### Files Created
+- frontend/src/lib/api/paymentMethods.ts
+- frontend/src/lib/stores/paymentMethods.ts
 - frontend/src/lib/components/payment/PaymentMethodList.svelte
 - frontend/src/lib/components/payment/PaymentMethodForm.svelte
 - frontend/src/lib/components/payment/PaymentMethodSelector.svelte
 - frontend/src/routes/payment-methods/+page.svelte
 
-### Files to Modify
-- frontend/src/lib/stores/paymentMethods.ts (create if not exists)
-- frontend/src/lib/api/paymentMethods.ts (create if not exists)
-- frontend/src/routes/transactions/AddExpenseModal.svelte (add selector)
+### Files Modified
+- frontend/src/lib/db/schema.ts (updated PaymentMethod interface)
+- frontend/src/lib/utils/validation.ts (added payment method validation)
+- frontend/src/routes/transactions/AddExpenseModal.svelte (added selector)
 
 ## Effort Estimate
 1.5 hours
@@ -63,4 +65,4 @@ Backend has full payment methods API but no frontend UI exists. Transactions nee
 - BP-r94p (Backend API Integration) - completed
 
 ## Session Date
-2025-12-28
+2025-12-29

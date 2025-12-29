@@ -38,6 +38,8 @@
     "vite-plugin-pwa": "^0.20.0"
   },
   "dependencies": {
+    "@clerk/backend": "^2.29.0",
+    "@clerk/clerk-js": "^5.117.0",
     "@fontsource/inter": "^5.1.0",
     "bits-ui": "^2.14.4",
     "class-variance-authority": "^0.7.0",

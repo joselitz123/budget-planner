@@ -30,6 +30,10 @@ export default defineConfig({
 			strategies: 'generateSW',
 			devOptions: {
 				enabled: true
+			},
+			workbox: {
+				// Increase limit to handle Clerk SDK (3MB+)
+				maximumFileSizeToCacheInBytes: 5 * 1024 * 1024 // 5 MB
 			}
 		})
 	],

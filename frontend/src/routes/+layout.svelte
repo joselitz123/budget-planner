@@ -8,11 +8,34 @@
 	import { initTheme, showToast } from '$lib/stores/ui';
 	import { isOnline, syncIndicator } from '$lib/stores/offline';
 	import { ToastContainer } from '$lib/components/ui/toast';
+	import { Clerk } from '@clerk/clerk-js';
+
+	let clerk: Clerk | null = null;
+	let showUserMenu = false;
+
+	// Close user menu when clicking outside
+	function handleClickOutside(event: MouseEvent) {
+		const target = event.target as HTMLElement;
+		if (!target.closest('.user-menu-container')) {
+			showUserMenu = false;
+		}
+	}
 
 	// Initialize app
 	onMount(async () => {
 		// Initialize theme
 		initTheme();
+
+		// Initialize Clerk
+		try {
+			const publishableKey = import.meta.env.VITE_PUBLIC_CLERK_PUBLISHABLE_KEY;
+			if (publishableKey) {
+				clerk = new Clerk(publishableKey);
+				await clerk.load();
+			}
+		} catch (error) {
+			console.error('[App] Error initializing Clerk:', error);
+		}
 
 		// Initialize IndexedDB
 		try {
@@ -33,6 +56,17 @@
 		}
 	});
 
+	async function handleLogout() {
+		try {
+			if (clerk) {
+				await clerk.signOut();
+				window.location.href = '/sign-in';
+			}
+		} catch (error) {
+			console.error('[App] Error signing out:', error);
+		}
+	}
+
 	// Cleanup on destroy
 	onDestroy(() => {
 		stopBackgroundSync();
@@ -40,7 +74,11 @@
 	});
 </script>
 
-<div class="min-h-screen bg-background-light dark:bg-background-dark font-body antialiased">
+<div
+	class="min-h-screen bg-background-light dark:bg-background-dark font-body antialiased"
+	onclick={handleClickOutside}
+	role="application"
+>
 	<!-- Top Navigation -->
 	<header
 		class="sticky top-0 z-50 bg-paper-light/90 dark:bg-paper-dark/90 backdrop-blur-sm border-b border-line-light dark:border-line-dark px-4 py-3"
@@ -105,6 +143,46 @@
 				>
 					<span class="material-icons-outlined text-primary dark:text-white">dark_mode</span>
 				</button>
+
+				<!-- User Menu -->
+				<div class="relative user-menu-container">
+					<button
+						onclick={() => (showUserMenu = !showUserMenu)}
+						class="flex items-center space-x-2 px-3 py-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+						aria-label="User menu"
+					>
+						<span class="material-icons-outlined text-primary dark:text-white">account_circle</span>
+						<span class="hidden sm:inline text-sm font-medium text-gray-700 dark:text-gray-300">
+							{$page.data.user?.name || 'User'}
+						</span>
+					</button>
+
+					{#if showUserMenu}
+						<div
+							class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 z-50"
+						>
+							<a
+								href="/profile"
+								class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+								onclick={() => (showUserMenu = false)}
+							>
+								<span class="material-icons-outlined text-sm align-middle mr-2">person</span>
+								Profile
+							</a>
+							<hr class="my-1 border-gray-200 dark:border-gray-700" />
+							<button
+								onclick={() => {
+									showUserMenu = false;
+									handleLogout();
+								}}
+								class="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+							>
+								<span class="material-icons-outlined text-sm align-middle mr-2">logout</span>
+								Sign Out
+							</button>
+						</div>
+					{/if}
+				</div>
 			</div>
 		</div>
 	</header>
