@@ -77,8 +77,8 @@ budget-planner/
 - **`starting-point.md`** - Complete project specification (database schema, API endpoints, workflows)
 - **`backend/CLAUDE.md`** - Backend development patterns (sqlc, type conversions, testing)
 - **`frontend/CLAUDE.md`** - Frontend development patterns (SvelteKit, IndexedDB, PWA)
-- **`backend/todo.md`** - Backend implementation status
-- **`frontend/todo.md`** - Frontend implementation status & TODO
+- **`MIGRATION.md`** - Migration history from todo.md to Beans
+- **`.beans/`** - Current task tracking system (use `beans list` to view)
 
 ---
 

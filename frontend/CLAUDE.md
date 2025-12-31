@@ -16,10 +16,9 @@ This file provides comprehensive guidance for Claude Code when working with the 
 
 **Current Status:** ~75% complete
 
-**Task Tracking:** Migrated to Beans system (see `.beans/` directory)
+**Task Tracking:** All tasks tracked in Beans system (`.beans/` directory)
 - Use `beans list --tag frontend` to view frontend tasks
 - Use `beans list --priority critical` to view high-priority tasks
-- Legacy `todo.md` preserved as `todo.md.legacy` for reference
 
 ---
 
@@ -554,12 +553,10 @@ PUBLIC_MAX_OFFLINE_OPERATIONS=100
 ## Important Files
 
 - **`.beans/`** - **⭐ Beans task management system - current task tracking - START HERE**
-- `todo.md.legacy` - Implementation status (preserved for reference, superseded by Beans)
 - `.beans.yml` - Beans configuration file (root directory)
-- **`CLAUDE.md`** (root) - Project-level documentation
-- **`backend/CLAUDE.md`** - Backend development guide
-- **`ui-page-inspiration.md`** - UI design inspiration with HTML/CSS examples
-- **`starting-point.md`** (root) - Full project specification
+- `starting-point.md` (root) - Full project specification
+- `CLAUDE.md` (root) - Project-level documentation
+- `backend/CLAUDE.md` - Backend development guide
 
 ---
 
@@ -591,8 +588,7 @@ frontend/
 ├── tailwind.config.js         # Tailwind CSS configuration
 ├── tsconfig.json              # TypeScript configuration
 ├── package.json               # Dependencies
-├── .env                       # Environment variables
-└── todo.md                    # Implementation status
+└── .env                       # Environment variables
 ```
 
 ---

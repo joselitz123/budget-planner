@@ -132,10 +132,7 @@ This document describes the migration from session-based todo.md files to the Be
 
 ## Legacy Files
 
-- `backend/todo.md.legacy` - Original backend todo (preserved for reference)
-- `frontend/todo.md.legacy` - Original frontend todo (preserved for reference)
-- `backend/todo.md.backup` - Backup copy of backend todo
-- `frontend/todo.md.backup` - Backup copy of frontend todo
+Legacy todo.md files were removed on 2025-12-31 after Beans migration was complete. All task tracking is now managed in the `.beans/` directory.
 
 ## WRAP-UP Workflow Integration
 
@@ -337,12 +334,11 @@ beans graphql '{ beans { id title status } }'
 
 ## Rollback Plan
 
-If migration needs to be rolled back:
+Legacy todo.md files were removed on 2025-12-31. To restore from git history:
 
 ```bash
-# 1. Restore todo.md files
-cp backend/todo.md.backup backend/todo.md
-cp frontend/todo.md.backup frontend/todo.md
+# 1. Restore todo.md files from git history
+git checkout <commit-before-cleanup>~1 -- backend/todo.md.legacy frontend/todo.md.legacy
 
 # 2. Remove Beans directory
 rm -rf .beans/
@@ -371,6 +367,7 @@ git status
 - [x] Beans permissions added to settings.local.json
 - [x] Legacy todo.md files renamed to .legacy
 - [x] Migration documentation created (MIGRATION.md)
+- [x] Legacy todo.md files removed (2025-12-31)
 - [ ] Git commit successful with all changes
 
 ---
