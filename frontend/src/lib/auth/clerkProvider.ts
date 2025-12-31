@@ -1,6 +1,4 @@
 import type { AuthTokenProvider } from '$lib/api/client';
-import clerkPkg from '@clerk/clerk-js';
-const { Clerk } = clerkPkg;
 
 /**
  * Clerk Authentication Token Provider
@@ -10,25 +8,31 @@ export class ClerkTokenProvider implements AuthTokenProvider {
 	private clerk: any = null;
 
 	constructor() {
-		// Initialize Clerk client
+		// Initialize Clerk client only in browser
 		if (typeof window !== 'undefined') {
-			try {
-				const publishableKey = import.meta.env.VITE_PUBLIC_CLERK_PUBLISHABLE_KEY;
+			this.initializeClerk();
+		}
+	}
 
-				if (!publishableKey) {
-					console.error('[Clerk] Missing PUBLIC_CLERK_PUBLISHABLE_KEY');
-					return;
-				}
+	private async initializeClerk() {
+		try {
+			// Dynamic import to prevent SSR issues
+			const clerkPkg = await import('@clerk/clerk-js');
+			const { Clerk } = clerkPkg;
 
-				this.clerk = new Clerk(publishableKey);
+			const publishableKey = import.meta.env.VITE_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
-				// Load Clerk resources
-				this.clerk.load().catch((error: unknown) => {
-					console.error('[Clerk] Failed to load:', error);
-				});
-			} catch (error) {
-				console.error('[Clerk] Initialization error:', error);
+			if (!publishableKey) {
+				console.error('[Clerk] Missing PUBLIC_CLERK_PUBLISHABLE_KEY');
+				return;
 			}
+
+			this.clerk = new Clerk(publishableKey);
+
+			// Load Clerk resources
+			await this.clerk.load();
+		} catch (error) {
+			console.error('[Clerk] Initialization error:', error);
 		}
 	}
 

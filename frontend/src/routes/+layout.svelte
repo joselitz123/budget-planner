@@ -8,8 +8,6 @@
 	import { initTheme, showToast } from '$lib/stores/ui';
 	import { isOnline, syncIndicator } from '$lib/stores/offline';
 	import { ToastContainer } from '$lib/components/ui/toast';
-	import clerkPkg from '@clerk/clerk-js';
-	const { Clerk } = clerkPkg;
 
 	let clerk: any = null;
 	let showUserMenu = false;
@@ -29,6 +27,10 @@
 
 		// Initialize Clerk
 		try {
+			// Dynamic import to prevent SSR issues
+			const clerkPkg = await import('@clerk/clerk-js');
+			const { Clerk } = clerkPkg;
+
 			const publishableKey = import.meta.env.VITE_PUBLIC_CLERK_PUBLISHABLE_KEY;
 			if (publishableKey) {
 				clerk = new Clerk(publishableKey);

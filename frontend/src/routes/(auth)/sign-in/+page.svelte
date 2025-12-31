@@ -1,7 +1,5 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import clerkPkg from '@clerk/clerk-js';
-	const { Clerk } = clerkPkg;
 
 	let clerk: any = null;
 	let container: HTMLDivElement;
@@ -13,6 +11,10 @@
 
 		async function load() {
 			try {
+				// Dynamic import to prevent SSR issues
+				const clerkPkg = await import('@clerk/clerk-js');
+				const { Clerk } = clerkPkg;
+
 				const publishableKey = import.meta.env.VITE_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
 				if (!publishableKey) {
