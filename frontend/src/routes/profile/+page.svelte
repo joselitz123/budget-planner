@@ -3,9 +3,10 @@
 	import { page } from '$app/stores';
 	import { Button } from '$lib/components/ui/button';
 	import { Card } from '$lib/components/ui/card';
-	import { Clerk } from '@clerk/clerk-js';
+	import clerkPkg from '@clerk/clerk-js';
+	const { Clerk } = clerkPkg;
 
-	let clerk: Clerk | null = null;
+	let clerk: any = null;
 	let loading = true;
 
 	onMount(async () => {

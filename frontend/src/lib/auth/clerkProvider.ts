@@ -1,12 +1,13 @@
 import type { AuthTokenProvider } from '$lib/api/client';
-import ClerkJs from '@clerk/clerk-js';
+import clerkPkg from '@clerk/clerk-js';
+const { Clerk } = clerkPkg;
 
 /**
  * Clerk Authentication Token Provider
  * Retrieves JWT tokens from Clerk session for API requests
  */
 export class ClerkTokenProvider implements AuthTokenProvider {
-	private clerk: typeof ClerkJs | null = null;
+	private clerk: any = null;
 
 	constructor() {
 		// Initialize Clerk client
@@ -22,7 +23,7 @@ export class ClerkTokenProvider implements AuthTokenProvider {
 				this.clerk = new Clerk(publishableKey);
 
 				// Load Clerk resources
-				this.clerk.load().catch((error) => {
+				this.clerk.load().catch((error: unknown) => {
 					console.error('[Clerk] Failed to load:', error);
 				});
 			} catch (error) {
