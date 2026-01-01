@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, tick } from 'svelte';
 
 	let clerk: any = null;
 	let container: HTMLDivElement;
@@ -34,6 +34,13 @@
 					return;
 				}
 
+				// Set loading to false to show container
+				if (!mounted) return;
+				loading = false;
+
+				// Wait for DOM to update
+				await tick();
+
 				// Mount Clerk's sign-up component
 				if (!mounted) return;
 				await clerk.mountSignUp(container, {
@@ -41,9 +48,6 @@
 					afterSignInUrl: '/',
 					signInUrl: '/sign-in'
 				});
-
-				if (!mounted) return;
-				loading = false;
 			} catch (err) {
 				if (!mounted) return;
 				console.error('[Sign Up] Error:', err);

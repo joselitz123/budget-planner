@@ -1,0 +1,37 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Test Environment Variables</title>
+  </head>
+  <body>
+    <h1>Environment Variables Test</h1>
+    <div id="results"></div>
+    <script type="module">
+      const results = document.getElementById("results");
+      const envVars = {
+        PUBLIC_CLERK_PUBLISHABLE_KEY: import.meta.env
+          .PUBLIC_CLERK_PUBLISHABLE_KEY,
+        PUBLIC_DEV_AUTH_PROVIDER: import.meta.env.PUBLIC_DEV_AUTH_PROVIDER,
+        PUBLIC_API_URL: import.meta.env.PUBLIC_API_URL,
+        PUBLIC_APP_NAME: import.meta.env.PUBLIC_APP_NAME,
+        PUBLIC_APP_SHORT_NAME: import.meta.env.PUBLIC_APP_SHORT_NAME,
+        MODE: import.meta.env.MODE,
+        DEV: import.meta.env.DEV,
+        PROD: import.meta.env.PROD,
+      };
+
+      let html = "<ul>";
+      for (const [key, value] of Object.entries(envVars)) {
+        const status = value ? "✅" : "❌";
+        const displayValue = value
+          ? key.includes("KEY")
+            ? value.substring(0, 20) + "..."
+            : value
+          : "MISSING";
+        html += `<li>${status} ${key}: ${displayValue}</li>`;
+      }
+      html += "</ul>";
+      results.innerHTML = html;
+    </script>
+  </body>
+</html>
