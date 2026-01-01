@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -18,9 +19,9 @@ type Config struct {
 	DatabaseURL string
 
 	// Clerk Authentication
-	ClerkSecretKey     string
+	ClerkSecretKey      string
 	ClerkPublishableKey string
-	ClerkJWTKey        string
+	ClerkDomain         string // Extracted from publishable key or set manually
 
 	// CORS
 	AllowedOrigins []string
@@ -46,7 +47,7 @@ func Load() (*Config, error) {
 		DatabaseURL:        getEnv("DATABASE_URL", ""),
 		ClerkSecretKey:     getEnv("CLERK_SECRET_KEY", ""),
 		ClerkPublishableKey: getEnv("CLERK_PUBLISHABLE_KEY", ""),
-		ClerkJWTKey:        getEnv("CLERK_JWT_KEY", ""),
+		ClerkDomain:        getEnv("CLERK_DOMAIN", ""),
 		AllowedOrigins:     getEnvSlice("ALLOWED_ORIGINS", []string{"http://localhost:5173", "http://127.0.0.1:5173"}),
 		SyncBatchSize:      getEnvInt("SYNC_BATCH_SIZE", 50),
 		SyncRetryAttempts:  getEnvInt("SYNC_RETRY_ATTEMPTS", 3),
@@ -123,7 +124,7 @@ func getEnvDuration(key string, defaultVal time.Duration) time.Duration {
 func getEnvSlice(key string, defaultVal []string) []string {
 	if val := os.Getenv(key); val != "" {
 		// Simple split by comma - for production you might want a more robust parser
-		return []string{val}
+		return strings.Split(val, ",")
 	}
 	return defaultVal
 }

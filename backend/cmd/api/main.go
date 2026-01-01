@@ -45,8 +45,8 @@ func main() {
 	// 	log.Fatalf("Failed to run migrations: %v", err)
 	// }
 
-	// Initialize JWT client
-	jwtClient, err := auth.NewJWTClient(os.Getenv("JWT_SECRET"))
+	// Initialize JWT client with Clerk domain for JWKS verification
+	jwtClient, err := auth.NewJWTClient(cfg.ClerkDomain)
 	if err != nil {
 		log.Fatalf("Failed to initialize JWT client: %v", err)
 	}

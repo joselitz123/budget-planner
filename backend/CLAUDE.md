@@ -5,16 +5,18 @@ This file provides comprehensive guidance for Claude Code when working with the 
 ## Backend Overview
 
 **Tech Stack:**
+
 - Go 1.23
 - Chi v5 router for HTTP routing
 - PostgreSQL 16 with pgx/v5 driver
 - sqlc for type-safe SQL query generation
-- JWT-based authentication (Clerk-compatible)
+- JWKS-based JWT verification (Clerk RS256 tokens)
 - Docker Compose for local development
 
 **Current Status:** All 10 handlers implemented with 100% test coverage (48/48 tests passing)
 
 **Task Tracking:** All tasks tracked in Beans system (`.beans/` directory)
+
 - Use `beans list --tag backend` to view backend tasks
 - Use `beans list --status todo` to view pending work
 
@@ -64,6 +66,7 @@ SELECT id, email, name FROM users WHERE id = $1;
 ```
 
 **Query Naming Convention:**
+
 - `:one` - Returns single row
 - `:many` - Returns multiple rows
 - `:exec` - Executes without returning data
@@ -74,6 +77,7 @@ SELECT id, email, name FROM users WHERE id = $1;
 ### Database Schema Conventions
 
 All tables follow these conventions:
+
 ```sql
 id UUID PRIMARY KEY DEFAULT gen_random_uuid()
 user_id UUID REFERENCES users(id) ON DELETE CASCADE
@@ -101,6 +105,7 @@ utils.NumericToFloat64(numericValue) // pgtype.Numeric → float64
 ```
 
 **Important:** Some sqlc-generated model fields use plain Go types, not pgtype:
+
 - `CreatePaymentMethodParams.Name` is `string`, not `pgtype.Text`
 - `CreatePaymentMethodParams.Type` is `string`, not `pgtype.Text`
 
@@ -122,18 +127,18 @@ id := r.PathValue("id")
 
 All 10 handlers are implemented and tested (48/48 tests passing):
 
-| # | Handler | Endpoints | Purpose |
-|---|---------|-----------|---------|
-| 1 | Auth | `POST /api/auth/login`, `POST /api/auth/logout`, `POST /api/auth/onboarding`, `GET /api/auth/me` | Authentication and user onboarding |
-| 2 | Users | `GET /api/users/me`, `PUT /api/users/me`, `DELETE /api/users/me` | User profile management |
-| 3 | Categories | `GET /api/categories`, `GET /api/categories/system`, `POST /api/categories`, `PUT /api/categories/{id}`, `DELETE /api/categories/{id}` | Category CRUD |
-| 4 | Budgets | `GET /api/budgets`, `GET /api/budgets/{month}`, `GET /api/budgets/id/{id}`, `POST /api/budgets`, `PUT /api/budgets/{id}`, `DELETE /api/budgets/{id}`, `GET /api/budgets/{id}/categories`, `POST /api/budgets/{id}/categories` | Budget management |
-| 5 | Transactions | `GET /api/transactions`, `GET /api/transactions/{id}`, `POST /api/transactions`, `PUT /api/transactions/{id}`, `DELETE /api/transactions/{id}`, `GET /api/budgets/{budgetId}/transactions` | Transaction CRUD |
-| 6 | Payment Methods | `GET /api/payment-methods`, `GET /api/payment-methods/{id}`, `POST /api/payment-methods`, `PUT /api/payment-methods/{id}`, `DELETE /api/payment-methods/{id}` | Payment method CRUD |
-| 7 | Sync | `POST /api/sync/push`, `POST /api/sync/pull`, `GET /api/sync/status`, `POST /api/sync/resolve-conflict`, `GET /api/sync/conflict-history` | Offline sync operations |
-| 8 | Reflections | `GET /api/reflections/month/{month}`, `POST /api/reflections`, `PUT /api/reflections/{id}`, `DELETE /api/reflections/{id}`, `GET /api/reflections/templates` | Monthly reflections |
-| 9 | Sharing | `POST /api/sharing/invitations`, `GET /api/sharing/invitations`, `POST /api/sharing/invitations/{id}/respond`, `GET /api/sharing/budgets/{budgetId}`, `GET /api/sharing/access/{budgetId}`, `DELETE /api/sharing/access/{id}`, `DELETE /api/sharing/invitations/{id}` | Budget sharing |
-| 10 | Analytics | `GET /api/analytics/dashboard/{month}`, `GET /api/analytics/spending/{month}`, `GET /api/analytics/trends`, `GET /api/analytics/category/{categoryId}` | Reports and analytics |
+| #   | Handler         | Endpoints                                                                                                                                                                                                                                                             | Purpose                            |
+| --- | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
+| 1   | Auth            | `POST /api/auth/login`, `POST /api/auth/logout`, `POST /api/auth/onboarding`, `GET /api/auth/me`                                                                                                                                                                      | Authentication and user onboarding |
+| 2   | Users           | `GET /api/users/me`, `PUT /api/users/me`, `DELETE /api/users/me`                                                                                                                                                                                                      | User profile management            |
+| 3   | Categories      | `GET /api/categories`, `GET /api/categories/system`, `POST /api/categories`, `PUT /api/categories/{id}`, `DELETE /api/categories/{id}`                                                                                                                                | Category CRUD                      |
+| 4   | Budgets         | `GET /api/budgets`, `GET /api/budgets/{month}`, `GET /api/budgets/id/{id}`, `POST /api/budgets`, `PUT /api/budgets/{id}`, `DELETE /api/budgets/{id}`, `GET /api/budgets/{id}/categories`, `POST /api/budgets/{id}/categories`                                         | Budget management                  |
+| 5   | Transactions    | `GET /api/transactions`, `GET /api/transactions/{id}`, `POST /api/transactions`, `PUT /api/transactions/{id}`, `DELETE /api/transactions/{id}`, `GET /api/budgets/{budgetId}/transactions`                                                                            | Transaction CRUD                   |
+| 6   | Payment Methods | `GET /api/payment-methods`, `GET /api/payment-methods/{id}`, `POST /api/payment-methods`, `PUT /api/payment-methods/{id}`, `DELETE /api/payment-methods/{id}`                                                                                                         | Payment method CRUD                |
+| 7   | Sync            | `POST /api/sync/push`, `POST /api/sync/pull`, `GET /api/sync/status`, `POST /api/sync/resolve-conflict`, `GET /api/sync/conflict-history`                                                                                                                             | Offline sync operations            |
+| 8   | Reflections     | `GET /api/reflections/month/{month}`, `POST /api/reflections`, `PUT /api/reflections/{id}`, `DELETE /api/reflections/{id}`, `GET /api/reflections/templates`                                                                                                          | Monthly reflections                |
+| 9   | Sharing         | `POST /api/sharing/invitations`, `GET /api/sharing/invitations`, `POST /api/sharing/invitations/{id}/respond`, `GET /api/sharing/budgets/{budgetId}`, `GET /api/sharing/access/{budgetId}`, `DELETE /api/sharing/access/{id}`, `DELETE /api/sharing/invitations/{id}` | Budget sharing                     |
+| 10  | Analytics       | `GET /api/analytics/dashboard/{month}`, `GET /api/analytics/spending/{month}`, `GET /api/analytics/trends`, `GET /api/analytics/category/{categoryId}`                                                                                                                | Reports and analytics              |
 
 ---
 
@@ -144,6 +149,7 @@ All 10 handlers are implemented and tested (48/48 tests passing):
 Tests use `internal/handlers/test_setup.go` which provides:
 
 **Helper Functions:**
+
 - `CreateTestUser(t, ctx)` - Creates a test user with unique ID
 - `CreateTestBudget(t, ctx, userID, "2025-01-01", 5000)` - Creates a test budget
 - `CreateTestCategory(t, ctx, userID, "Food", "🍔", "#FF5733")` - Creates a test category
@@ -169,17 +175,17 @@ DATABASE_URL="postgresql://budgetuser:budgetpass@localhost:5432/budgetdb?sslmode
 
 **Overall: 48 out of 48 tests passing (100%)** ✅
 
-| Handler | Passing | Total | Status |
-|---------|---------|-------|--------|
-| Auth | 5 | 5 | ✅ All passing |
-| Budgets | 8 | 8 | ✅ All passing |
-| Categories | 6 | 6 | ✅ All passing |
-| Payment Methods | 6 | 6 | ✅ All passing |
-| Reflections | 6 | 6 | ✅ All passing |
-| Sharing | 7 | 7 | ✅ All passing |
-| Sync | 5 | 5 | ✅ All passing |
-| Transactions | 7 | 7 | ✅ All passing |
-| Analytics | 4 | 4 | ✅ All passing |
+| Handler         | Passing | Total | Status         |
+| --------------- | ------- | ----- | -------------- |
+| Auth            | 5       | 5     | ✅ All passing |
+| Budgets         | 8       | 8     | ✅ All passing |
+| Categories      | 6       | 6     | ✅ All passing |
+| Payment Methods | 6       | 6     | ✅ All passing |
+| Reflections     | 6       | 6     | ✅ All passing |
+| Sharing         | 7       | 7     | ✅ All passing |
+| Sync            | 5       | 5     | ✅ All passing |
+| Transactions    | 7       | 7     | ✅ All passing |
+| Analytics       | 4       | 4     | ✅ All passing |
 
 **See `internal/utils/types.go` for complete type conversion helper list.**
 
@@ -219,7 +225,7 @@ backend/
 │   └── main.go              # Entry point, route registration
 ├── internal/
 │   ├── auth/
-│   │   ├── clerk.go         # JWT client (GenerateToken for testing)
+│   │   ├── clerk.go         # JWKS-based JWT verification for Clerk tokens
 │   │   └── middleware.go    # Auth middleware (SetUserIDInContext helper)
 │   ├── config/
 │   │   └── config.go        # Environment variable loading
@@ -273,33 +279,47 @@ Required environment variables (`.env`):
 ```bash
 DATABASE_URL=postgresql://budgetuser:budgetpass@localhost:5432/budgetdb?sslmode=disable
 PORT=8080
-JWT_SECRET=dev-secret-key-change-in-production
 ```
 
-For Clerk authentication in development:
+For Clerk authentication (required):
+
 ```bash
-CLERK_SECRET_KEY=your_clerk_secret_key
-CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
+CLERK_SECRET_KEY=sk_test_your_clerk_secret_key_here
+CLERK_PUBLISHABLE_KEY=pk_test_your_clerk_publishable_key_here
+CLERK_DOMAIN=your-clerk-domain  # Extracted from Clerk publishable key
 ```
+
+**Note:** The `CLERK_DOMAIN` is the domain part of your Clerk instance (e.g., `lenient-tiger-97` from `lenient-tiger-97.clerk.accounts.dev`).
 
 ---
 
 ## Authentication Flow
 
 1. Frontend uses Clerk SDK for authentication
-2. Backend validates JWT tokens via `internal/auth/middleware.go`
-3. User context attached to requests by `auth.SetUserIDInContext()`
-4. Clerk user ID stored in `users.clerk_user_id` for lookups
+2. Clerk issues RS256-signed JWT tokens
+3. Backend validates tokens via JWKS (JSON Web Key Set) from Clerk
+4. `internal/auth/clerk.go` fetches public keys from `https://{domain}.clerk.accounts.dev/.well-known/jwks.json`
+5. Token verification includes:
+   - RS256 signature verification using Clerk's public keys
+   - Issuer validation (must match Clerk instance)
+   - Expiration time validation
+   - Subject (user ID) extraction
+6. User context attached to requests by `auth.SetUserIDInContext()`
+7. Clerk user ID stored in `users.clerk_user_id` for lookups
+
+**Important:** The backend no longer uses HMAC-SHA256 (HS256) for JWT verification. All tokens must be issued by Clerk and verified via JWKS.
 
 ---
 
 ## Permission Model for Sharing
 
 Budgets can be shared with two permission levels:
+
 - `view` - Read-only access
 - `edit` - Full edit access
 
 Permission checks occur via the `share_access` table. Always check:
+
 1. Is user the owner? → Full access
 2. Is user in share_access with edit permission? → Edit access
 3. Is user in share_access with view permission? → Read-only
