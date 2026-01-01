@@ -41,7 +41,7 @@ export class ApiClient {
 	private authProvider: AuthTokenProvider;
 
 	constructor(baseUrl?: string, authProvider?: AuthTokenProvider) {
-		this.baseUrl = baseUrl || import.meta.env.VITE_PUBLIC_API_URL || 'http://localhost:8080/api';
+		this.baseUrl = baseUrl || import.meta.env.PUBLIC_API_URL || 'http://localhost:8080/api';
 		this.authProvider = authProvider || devTokenProvider;
 	}
 
@@ -239,7 +239,7 @@ export class ApiClient {
 // Export singleton instance
 // Development switch: use dev provider when VITE_DEV_AUTH_PROVIDER=dev
 // Use ClerkTokenProvider when set to 'clerk' or unset
-const authProvider = import.meta.env.VITE_DEV_AUTH_PROVIDER === 'dev'
+const authProvider = import.meta.env.PUBLIC_DEV_AUTH_PROVIDER === 'dev'
 	? devTokenProvider
 	: new ClerkTokenProvider();
 

@@ -124,7 +124,32 @@ fi
 # 7. Create logs directory
 mkdir -p logs
 
-# 8. Start backend
+# 8. Clear caches to ensure environment variables are picked up
+echo ""
+echo -e "${YELLOW}Clearing caches...${NC}"
+cd frontend
+
+# Clear Vite cache
+if [ -d .vite ]; then
+    rm -rf .vite
+    echo -e "${GREEN}✓ Cleared Vite cache${NC}"
+fi
+
+# Clear SvelteKit build cache
+if [ -d .svelte-kit ]; then
+    rm -rf .svelte-kit
+    echo -e "${GREEN}✓ Cleared SvelteKit cache${NC}"
+fi
+
+# Clear node_modules/.vite cache
+if [ -d node_modules/.vite ]; then
+    rm -rf node_modules/.vite
+    echo -e "${GREEN}✓ Cleared node_modules/.vite cache${NC}"
+fi
+
+cd ..
+
+# 9. Start backend
 echo ""
 echo -e "${YELLOW}Starting backend server...${NC}"
 cd backend

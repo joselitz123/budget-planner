@@ -200,16 +200,23 @@ temp/
 .env
 .env.local
 .env.*.local
+.env.production
+.env.development
+.env.test
 *.env
 .envrc
 
 # Secrets
 secrets/
+config/secrets/
+auth/secrets/
 *.key
 *.pem
 *.crt
 *.p12
 *.pfx
+*_secret
+*.secret
 
 # API keys, tokens, certificates
 api_keys.txt

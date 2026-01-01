@@ -15,7 +15,7 @@
 				const clerkPkg = await import('@clerk/clerk-js');
 				const { Clerk } = clerkPkg;
 
-				const publishableKey = import.meta.env.VITE_PUBLIC_CLERK_PUBLISHABLE_KEY;
+				const publishableKey = import.meta.env.PUBLIC_CLERK_PUBLISHABLE_KEY;
 
 				if (!publishableKey) {
 					if (!mounted) return;

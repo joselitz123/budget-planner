@@ -122,7 +122,7 @@ export async function processSyncQueue(): Promise<void> {
 
 	try {
 		// Send to server via sync API
-		const apiUrl = import.meta.env.VITE_PUBLIC_API_URL || 'http://localhost:8080/api';
+		const apiUrl = import.meta.env.PUBLIC_API_URL || 'http://localhost:8080/api';
 		const response = await fetch(`${apiUrl}/sync/push`, {
 			method: 'POST',
 			headers: {
@@ -217,7 +217,7 @@ export async function pullFromServer(lastSyncTimestamp?: string): Promise<void> 
 	syncStatus.set('syncing');
 
 	try {
-		const apiUrl = import.meta.env.VITE_PUBLIC_API_URL || 'http://localhost:8080/api';
+		const apiUrl = import.meta.env.PUBLIC_API_URL || 'http://localhost:8080/api';
 		const response = await fetch(`${apiUrl}/sync/pull`, {
 			method: 'POST',
 			headers: {

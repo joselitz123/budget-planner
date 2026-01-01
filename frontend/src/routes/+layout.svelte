@@ -31,10 +31,20 @@
 			const clerkPkg = await import('@clerk/clerk-js');
 			const { Clerk } = clerkPkg;
 
-			const publishableKey = import.meta.env.VITE_PUBLIC_CLERK_PUBLISHABLE_KEY;
+			const publishableKey = import.meta.env.PUBLIC_CLERK_PUBLISHABLE_KEY;
+			
+			console.log('[App] Clerk env var check:', {
+				hasKey: !!publishableKey,
+				keyPrefix: publishableKey ? publishableKey.substring(0, 10) + '...' : 'N/A',
+				envMode: import.meta.env.MODE
+			});
+			
 			if (publishableKey) {
 				clerk = new Clerk(publishableKey);
 				await clerk.load();
+				console.log('[App] Clerk successfully initialized');
+			} else {
+				console.error('[App] Missing PUBLIC_CLERK_PUBLISHABLE_KEY');
 			}
 		} catch (error) {
 			console.error('[App] Error initializing Clerk:', error);
