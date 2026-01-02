@@ -11,17 +11,17 @@
  * These routes MUST be accessible without authentication.
  */
 
-import type { LayoutServerLoad } from './$types';
+import type { LayoutServerLoad } from "./$types";
 
 export const load: LayoutServerLoad = async (event) => {
-	// Get auth state from hooks.server.ts (already verified JWT)
-	const { userId, session } = event.locals;
+  // Get auth state from hooks.server.ts (already verified JWT)
+  const { userId, session } = event.locals;
 
-	// DO NOT redirect to sign-in - these pages ARE the sign-in/sign-up pages
-	// They must be accessible to unauthenticated users
+  // DO NOT redirect to sign-in - these pages ARE the sign-in/sign-up pages
+  // They must be accessible to unauthenticated users
 
-	return {
-		userId,
-		session
-	};
+  return {
+    userId,
+    hasSession: !!session,
+  };
 };
