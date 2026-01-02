@@ -110,9 +110,20 @@ export async function getOrCreateBudgetForMonth(month: string): Promise<Budget |
 
 /**
  * Create budget for current month (auto-creation)
+ * @param userId - The user ID to create the budget for
+ * @param options - Optional parameters for budget creation
+ * @param options.name - Optional custom name for the budget (defaults to "${month} Budget")
+ * @param options.totalLimit - Optional total limit for the budget (defaults to 2000)
  */
-export async function createBudgetForCurrentMonth(userId: string): Promise<Budget> {
+export async function createBudgetForCurrentMonth(
+	userId: string,
+	options?: { name?: string; totalLimit?: number }
+): Promise<Budget> {
 	const month = getMonthKey(new Date());
+	
+	// Extract options with defaults
+	const name = options?.name || `${month} Budget`;
+	const totalLimit = options?.totalLimit ?? 2000;
 
 	// Check if budget already exists
 	const existing = get(budgets).find((b) => b.month === month);
@@ -129,7 +140,7 @@ export async function createBudgetForCurrentMonth(userId: string): Promise<Budge
 
 			const apiBudget = await budgetsApi.createBudget({
 				month: monthDate,
-				totalLimit: 2000 // Default limit
+				totalLimit
 			});
 
 			const newBudget: Budget = {
@@ -148,7 +159,7 @@ export async function createBudgetForCurrentMonth(userId: string): Promise<Budge
 			budgets.update((b) => [...b, newBudget]);
 			currentBudget.set(newBudget);
 
-			console.log('[Budgets] Created budget via API for month:', month);
+			console.log('[Budgets] Created budget via API for month:', month, 'with name:', name);
 			return newBudget;
 		} catch (error) {
 			console.warn('[Budgets] API create failed, using local fallback:', error);
@@ -162,7 +173,7 @@ export async function createBudgetForCurrentMonth(userId: string): Promise<Budge
 		id: crypto.randomUUID(),
 		userId,
 		month,
-		totalLimit: 2000, // Default limit - could be made configurable
+		totalLimit,
 		createdAt: new Date().toISOString(),
 		updatedAt: new Date().toISOString()
 	};
@@ -180,7 +191,7 @@ export async function createBudgetForCurrentMonth(userId: string): Promise<Budge
 		data: newBudget
 	});
 
-	console.log('[Budgets] Auto-created budget locally for month:', month);
+	console.log('[Budgets] Auto-created budget locally for month:', month, 'with name:', name);
 	return newBudget;
 }
 

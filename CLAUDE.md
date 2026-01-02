@@ -80,16 +80,20 @@ budget-planner/
 - **`MIGRATION.md`** - Migration history from todo.md to Beans
 - **`.beans/`** - Current task tracking system (use `beans list` to view)
 
+**⚠️ IMPORTANT: Beans CLI commands MUST be run from the project root directory (`/workspace/budget-planner`). Never run beans commands from subdirectories like `backend/` or `frontend/`.**
+
 ---
 
 ## Current Status
 
 **Backend:** ✅ Complete (100% test coverage - 48/48 tests passing)
+
 - All 10 handlers implemented and tested
 - JWT-based authentication (Clerk-compatible)
 - sqlc for type-safe database queries
 
 **Frontend:** ⚠️ ~75% Complete
+
 - Core pages implemented (Budget Overview, Expense Tracker, Bill Payment)
 - Transaction Modal with form validation
 - IndexedDB client and sync queue infrastructure
@@ -100,6 +104,7 @@ budget-planner/
 ## Environment Configuration
 
 ### Backend (.env)
+
 ```bash
 DATABASE_URL=postgresql://budgetuser:budgetpass@postgres:5432/budgetdb?sslmode=disable
 PORT=8080
@@ -108,6 +113,7 @@ CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
 ```
 
 ### Frontend (.env)
+
 ```bash
 PUBLIC_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
 PUBLIC_API_URL=http://localhost:8080/api
@@ -120,6 +126,7 @@ PUBLIC_API_URL=http://localhost:8080/api
 ## Development Workflow
 
 ### Backend
+
 ```bash
 cd backend
 air                              # Hot reload (watches .go and .sql files)
@@ -127,6 +134,7 @@ air                              # Hot reload (watches .go and .sql files)
 ```
 
 ### Frontend
+
 ```bash
 cd frontend
 npm run dev                      # Vite dev server with HMR
@@ -138,12 +146,14 @@ npm run check:watch              # Watch mode for type checking
 ## Testing
 
 **Backend:**
+
 ```bash
 cd backend
 DATABASE_URL="postgresql://budgetuser:budgetpass@localhost:5432/budgetdb?sslmode=disable" go test ./internal/handlers/ -v
 ```
 
 **Frontend:**
+
 ```bash
 cd frontend
 npm run check                    # TypeScript type checking
@@ -155,12 +165,14 @@ npm run build                    # Production build
 ## Common Patterns
 
 ### Authentication
+
 1. Frontend uses Clerk SDK for authentication
 2. Backend validates JWT tokens via middleware
 3. User context attached to requests
 4. Clerk user ID stored in `users.clerk_user_id` for lookups
 
 ### Migrations
+
 - Numbered migration files: `001_initial_schema.up.sql`
 - Run: `migrate -path backend/sql/schema -database "$DATABASE_URL" up`
 
@@ -182,7 +194,10 @@ When you mention the keyword **"WRAP-UP"**, I will:
 
 ### 0. Run Beans Prime (Automatic)
 
-Run `beans prime` to automatically:
+**⚠️ CRITICAL: Ensure you are in the project root directory before running any beans commands.**
+
+Run `beans prime` from the project root to automatically:
+
 - Query recent work and context
 - Prepare bean creation/update
 - Track files modified in session
@@ -191,6 +206,7 @@ Run `beans prime` to automatically:
 ### 1. Create/Update Beans for Session Work
 
 **For each feature/bug completed:**
+
 - Create new bean or update existing open bean
 - Set status to `completed` with completion date
 - Add labels: `[completed]`, `[frontend|backend]`, feature area
@@ -199,6 +215,7 @@ Run `beans prime` to automatically:
 - Link related beans (dependencies, blockers)
 
 **For technical debts discovered:**
+
 - Create `bug` type bean for technical debt
 - Set priority (normal/low based on impact)
 - Document problem and workaround used
@@ -206,6 +223,7 @@ Run `beans prime` to automatically:
 - Add session date in bean body
 
 **⚠️ CRITICAL: Log ALL warnings, errors, and workarounds encountered:**
+
 - **Every warning** from type checking, linting, or build tools must have a bean created
 - **Every workaround** used to bypass an issue must be documented in a bean
 - **Every error** encountered (even if resolved) must be tracked with context
@@ -218,6 +236,7 @@ Run `beans prime` to automatically:
 - This ensures no technical debt is lost and all issues are trackable
 
 **For bugs fixed:**
+
 - Create `bug` type bean with status `completed`
 - Document bug description and fix
 - Link to feature bean if applicable
@@ -225,12 +244,14 @@ Run `beans prime` to automatically:
 ### 2. Update CLAUDE.md (If Applicable)
 
 **When to update:**
+
 - New architectural patterns introduced
 - New development workflow established
 - Breaking changes to existing patterns
 - New dependencies or major tech stack changes
 
 **When NOT to update:**
+
 - Routine bug fixes
 - Feature implementations following existing patterns
 - Test updates
@@ -239,6 +260,7 @@ Run `beans prime` to automatically:
 ### 3. Check .gitignore for Security Files
 
 **Verify these patterns are in .gitignore:**
+
 - `.env*` (all environment files)
 - `*.key`, `*.pem`, `*.crt`, `*.p12`, `*.pfx` (certificates/keys)
 - `secrets/`, `config/secrets/`, `auth/secrets/` (secrets directories)
@@ -248,6 +270,7 @@ Run `beans prime` to automatically:
 - `.env.production` (production environment)
 
 **Check for files created during session:**
+
 - Any `.env` files created
 - Any API key files generated
 - Any certificate/key files created
@@ -256,6 +279,7 @@ Run `beans prime` to automatically:
 ### 4. Commit and Push Changes
 
 **Commit message format (enhanced with Beans):**
+
 ```
 {type}: {title}
 
@@ -267,6 +291,7 @@ Co-authored-by: Claude Sonnet <noreply@anthropic.com>
 ```
 
 **Example:**
+
 ```
 feat(frontend): implement month navigation
 
@@ -282,12 +307,14 @@ Co-authored-by: Claude Sonnet <noreply@anthropic.com>
 ```
 
 **Steps:**
-1. `beans prime` - Review beans created/updated
-2. `git add` all changed files
-3. Show brief summary: beans created/updated + files changed + commit message
-4. `git commit` with bean-enhanced message
-5. `git push` to current branch
-6. Display commit SHA for reference
+
+1. `cd /workspace/budget-planner` - Ensure you're in project root
+2. `beans prime` - Review beans created/updated
+3. `git add` all changed files
+4. Show brief summary: beans created/updated + files changed + commit message
+5. `git commit` with bean-enhanced message
+6. `git push` to current branch
+7. Display commit SHA for reference
 
 **Note:** This will be automatic after showing the summary (no confirmation needed per user preference).
 
@@ -300,6 +327,7 @@ Co-authored-by: Claude Sonnet <noreply@anthropic.com>
 **I will:**
 
 1. **Run `beans prime`** and review beans:
+
    ```
    ✅ Created BP-mfu9: Month Navigation (feature, completed)
    ✅ Updated BP-577b: Shadcn CLI workaround (bug, notes added)
@@ -317,11 +345,13 @@ Co-authored-by: Claude Sonnet <noreply@anthropic.com>
 2. **Check context:** "You were working in `frontend/src/routes/+layout.svelte`"
 
 3. **Verify `.gitignore`:**
+
    - ✅ `.env` already ignored
    - ✅ `*.key` already ignored
    - ✅ No new security files created
 
 4. **Commit with bean metadata:**
+
    ```bash
    git add .
    git commit -m "feat(frontend): implement month navigation
@@ -339,14 +369,16 @@ Co-authored-by: Claude Sonnet <noreply@anthropic.com>
 
 **Bean Creation Rules:**
 
-*When to create beans:*
+_When to create beans:_
+
 - ✅ Every feature/bug fix/enhancement completed
 - ✅ Every technical debt discovered
 - ✅ Every testing task completed
 - ✅ Every documentation update
 - ✅ **EVERY warning, error, or workaround encountered** (CRITICAL - see WRAP-UP workflow)
 
-*Bean metadata requirements:*
+_Bean metadata requirements:_
+
 - `title` - Clear, actionable title
 - `type` - One of: feature, bug, task, milestone, epic
 - `status` - todo, in-progress, completed
@@ -354,7 +386,8 @@ Co-authored-by: Claude Sonnet <noreply@anthropic.com>
 - `tags` - At minimum: [frontend|backend], [feature-area]
 - `body` - Include effort estimate, files modified, session date
 
-*Technical Debt beans:*
+_Technical Debt beans:_
+
 - Always create when workaround used
 - Include problem description
 - Include workaround details
@@ -362,6 +395,8 @@ Co-authored-by: Claude Sonnet <noreply@anthropic.com>
 - Set priority based on impact
 
 **Useful Beans Commands:**
+
+**⚠️ IMPORTANT: All beans commands must be run from the project root directory (`/workspace/budget-planner`).**
 
 ```bash
 # Show open beans by priority
@@ -384,6 +419,7 @@ beans archive
 ```
 
 **Security Checks - Always verify:**
+
 - No `.env` files committed
 - No API keys in code
 - No certificates/keys in repository
@@ -398,11 +434,14 @@ When you mention the keyword **"KICK-START"**, I will:
 
 ### 1. Run Beans Prime
 
-Run `beans prime` to get latest context from Beans system and prepare for the session.
+**⚠️ CRITICAL: Ensure you are in the project root directory before running any beans commands.**
+
+Run `beans prime` from the project root to get latest context from Beans system and prepare for the session.
 
 ### 2. Show Session Context
 
 Display:
+
 - Most recent commit with bean metadata (from WRAP-UP)
 - Last beans completed/updated
 - Session date from commit message
@@ -413,6 +452,7 @@ Display:
 Group tasks by priority with visual indicators:
 
 **🔴 CRITICAL** - Must do now (blocks release or essential functionality)
+
 - Bean ID and title
 - Type and priority
 - Effort estimate
@@ -424,6 +464,7 @@ Group tasks by priority with visual indicators:
 **🟢 LOW** - Nice to have, can defer
 
 Include:
+
 - Bean ID (e.g., BP-r94p)
 - Title
 - Type (feature/bug/task)
@@ -434,6 +475,7 @@ Include:
 ### 4. Check Git Status
 
 Show:
+
 - Uncommitted changes?
 - Untracked files?
 - Current branch
@@ -450,6 +492,7 @@ Show:
 ### 6. Suggest Next Steps
 
 Recommend based on:
+
 - Priority (critical first)
 - Dependencies (blocking tasks)
 - Context (what was just completed)
@@ -460,6 +503,7 @@ Top 3 tasks to work on next.
 ### 7. Check Environment (Optional)
 
 Verify:
+
 - PostgreSQL running (`docker ps`)
 - Backend ready (`cd backend`, check `air` status)
 - Frontend ready (`cd frontend`, check dev server)
@@ -472,9 +516,10 @@ Verify:
 
 **I will:**
 
-1. **Run `beans prime`** and gather context
+1. **Ensure in project root** and run `beans prime` to gather context
 
 2. **Display session context:**
+
    ```
    🚀 KICK-START: Budget Planner Development Session
    =================================================
@@ -484,6 +529,7 @@ Verify:
    ```
 
 3. **Show open tasks by priority:**
+
    ```
    🔴 CRITICAL TASKS (2):
    ==================
@@ -518,6 +564,7 @@ Verify:
    ```
 
 4. **Check git status:**
+
    ```
    📂 Git Status:
    ============
@@ -527,6 +574,7 @@ Verify:
    ```
 
 5. **Show recent activity:**
+
    ```
    📝 Recent Activity:
    ==================
@@ -536,6 +584,7 @@ Verify:
    ```
 
 6. **Suggest next steps:**
+
    ```
    💡 Suggested Next Steps:
    ========================
@@ -552,6 +601,7 @@ Verify:
    ```
 
 7. **Check environment (optional):**
+
    ```
    🔧 Environment Check:
    ===================
@@ -576,16 +626,17 @@ Verify:
 
 ### KICK-START vs WRAP-UP
 
-| Aspect | KICK-START | WRAP-UP |
-|--------|-----------|---------|
-| **Purpose** | Begin session | End session |
-| **Timing** | Start of work | End of work |
-| **Beans Action** | Query/list beans | Create/update beans |
-| **Git Action** | Check status | Commit changes |
-| **Output** | Task list, context | Commit summary |
-| **Frequency** | Once per session | Once per session |
+| Aspect           | KICK-START         | WRAP-UP             |
+| ---------------- | ------------------ | ------------------- |
+| **Purpose**      | Begin session      | End session         |
+| **Timing**       | Start of work      | End of work         |
+| **Beans Action** | Query/list beans   | Create/update beans |
+| **Git Action**   | Check status       | Commit changes      |
+| **Output**       | Task list, context | Commit summary      |
+| **Frequency**    | Once per session   | Once per session    |
 
 **Development Workflow:**
+
 ```
 KICK-START → [Work on tasks] → WRAP-UP → [Break] → KICK-START → ...
 ```
@@ -595,12 +646,14 @@ KICK-START → [Work on tasks] → WRAP-UP → [Break] → KICK-START → ...
 ### Important Notes
 
 **When to use KICK-START:**
+
 - Starting a new development session
 - Returning from a break
 - Need to quickly get up to speed
 - Want to see what to work on next
 
 **What KICK-START provides:**
+
 - Full context from last session
 - Prioritized task list
 - Git status awareness
