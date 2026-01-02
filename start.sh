@@ -105,9 +105,17 @@ fi
 
 # 5. Check Go for backend
 if ! command -v go &> /dev/null; then
-    echo -e "${YELLOW}Warning: Go is not installed${NC}"
+    echo -e "${RED}Error: Go is not installed${NC}"
     echo "Backend may not start properly. Please install Go 1.23+"
+    exit 1
 fi
+echo -e "${GREEN}✓ Go is installed$(go version)${NC}"
+
+# Set up custom GOPATH to avoid permission issues
+export GOPATH="$PWD/.go"
+export GOMODCACHE="$GOPATH/pkg/mod"
+mkdir -p "$GOMODCACHE"
+echo -e "${GREEN}✓ GOPATH set to $GOPATH${NC}"
 
 # 6. Install frontend dependencies if needed
 echo ""
@@ -135,9 +143,10 @@ if [ -d .vite ]; then
     echo -e "${GREEN}✓ Cleared Vite cache${NC}"
 fi
 
-# Clear SvelteKit build cache
+# Clear SvelteKit build cache (but keep tsconfig.json)
 if [ -d .svelte-kit ]; then
-    rm -rf .svelte-kit
+    # Only clear specific cache directories, not the entire .svelte-kit
+    rm -rf .svelte-kit/output .svelte-kit/server 2>/dev/null || true
     echo -e "${GREEN}✓ Cleared SvelteKit cache${NC}"
 fi
 
@@ -149,20 +158,34 @@ fi
 
 cd ..
 
-# 9. Start backend
+# 9. Kill existing backend process on port 8080 if running
+echo ""
+echo -e "${YELLOW}Checking for existing backend process on port 8080...${NC}"
+if lsof -ti:8080 &> /dev/null; then
+    echo -e "${YELLOW}Killing existing backend process on port 8080...${NC}"
+    lsof -ti:8080 | xargs kill -9 2>/dev/null || true
+    sleep 1
+    echo -e "${GREEN}✓ Killed existing backend process${NC}"
+else
+    echo -e "${GREEN}✓ Port 8080 is available${NC}"
+fi
+
+# 10. Start backend
 echo ""
 echo -e "${YELLOW}Starting backend server...${NC}"
 cd backend
 
 # Check if air is installed for hot reload
 if command -v air &> /dev/null; then
-    air > ../logs/backend.log 2>&1 &
+    echo -e "${BLUE}Using air for hot reload...${NC}"
+    air 2>&1 | tee ../logs/backend.log &
     BACKEND_PID=$!
-    echo -e "${GREEN}✓ Backend started with air (hot reload)${NC}"
+    echo -e "${GREEN}✓ Backend started with air (PID: $BACKEND_PID)${NC}"
 else
-    go run ./cmd/api > ../logs/backend.log 2>&1 &
+    echo -e "${BLUE}Using go run...${NC}"
+    go run ./cmd/api 2>&1 | tee ../logs/backend.log &
     BACKEND_PID=$!
-    echo -e "${GREEN}✓ Backend started with go run${NC}"
+    echo -e "${GREEN}✓ Backend started with go run (PID: $BACKEND_PID)${NC}"
 fi
 
 cd ..
@@ -170,25 +193,60 @@ cd ..
 # Save backend PID
 echo $BACKEND_PID > logs/backend.pid
 
-# 9. Start frontend
+# 10. Start frontend
 echo ""
 echo -e "${YELLOW}Starting frontend server...${NC}"
 cd frontend
-npm run dev > ../logs/frontend.log 2>&1 &
+npm run dev 2>&1 | tee ../logs/frontend.log &
 FRONTEND_PID=$!
 cd ..
 
 # Save frontend PID
 echo $FRONTEND_PID > logs/frontend.pid
 
-echo -e "${GREEN}✓ Frontend started${NC}"
+echo -e "${GREEN}✓ Frontend started (PID: $FRONTEND_PID)${NC}"
 
-# 10. Wait for services to be ready
+# 11. Wait for services to be ready
 echo ""
 echo -e "${YELLOW}Waiting for services to start...${NC}"
 sleep 5
 
-# 11. Display status
+# 12. Health checks
+echo ""
+echo -e "${YELLOW}Checking service health...${NC}"
+
+# Check if backend process is still running
+if ps -p $BACKEND_PID > /dev/null 2>&1; then
+    echo -e "${GREEN}✓ Backend process is running (PID: $BACKEND_PID)${NC}"
+else
+    echo -e "${RED}✗ Backend process is NOT running!${NC}"
+    echo -e "${RED}Check logs/backend.log for errors${NC}"
+fi
+
+# Check if backend port is listening
+if netstat -tlnp 2>/dev/null | grep -q ":8080 " || lsof -i :8080 2>/dev/null | grep -q LISTEN; then
+    echo -e "${GREEN}✓ Backend is listening on port 8080${NC}"
+else
+    echo -e "${RED}✗ Backend is NOT listening on port 8080!${NC}"
+    echo -e "${RED}The backend may have failed to start${NC}"
+fi
+
+# Check if frontend process is still running
+if ps -p $FRONTEND_PID > /dev/null 2>&1; then
+    echo -e "${GREEN}✓ Frontend process is running (PID: $FRONTEND_PID)${NC}"
+else
+    echo -e "${RED}✗ Frontend process is NOT running!${NC}"
+    echo -e "${RED}Check logs/frontend.log for errors${NC}"
+fi
+
+# Check if frontend port is listening
+if netstat -tlnp 2>/dev/null | grep -q ":5173 " || lsof -i :5173 2>/dev/null | grep -q LISTEN; then
+    echo -e "${GREEN}✓ Frontend is listening on port 5173${NC}"
+else
+    echo -e "${YELLOW}⚠ Frontend may still be starting up...${NC}"
+fi
+
+# 13. Display status
 echo ""
 echo -e "${BLUE}========================================${NC}"
 echo -e "${GREEN}✓ Budget Planner is running!${NC}"
@@ -197,7 +255,11 @@ echo ""
 echo -e "  Frontend: ${GREEN}http://localhost:5173${NC}"
 echo -e "  Backend:  ${GREEN}http://localhost:8080${NC}"
 echo ""
-echo -e "Logs:"
+echo -e "Process IDs:"
+echo -e "  Backend:  ${YELLOW}$BACKEND_PID${NC}"
+echo -e "  Frontend: ${YELLOW}$FRONTEND_PID${NC}"
+echo ""
+echo -e "Logs (output also shown above):"
 echo -e "  Backend:  ${YELLOW}logs/backend.log${NC}"
 echo -e "  Frontend: ${YELLOW}logs/frontend.log${NC}"
 echo ""

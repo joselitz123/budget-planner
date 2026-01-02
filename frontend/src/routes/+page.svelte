@@ -1,12 +1,14 @@
 <script lang="ts">
 	import { formatCurrency, formatMonthYear } from '$lib/utils/format';
-	import { currentMonthBudget, totalSpent, totalIncome } from '$lib/stores';
+	import { currentMonthBudget, totalSpent, totalIncome, createBudgetForCurrentMonth } from '$lib/stores';
 	import { budgetsLoading } from '$lib/stores/budgets';
 	import { Skeleton } from '$lib/components/ui/skeleton';
 	import { Button } from '$lib/components/ui/button';
 	import ShareBudgetDialog from '$lib/components/sharing/ShareBudgetDialog.svelte';
+	import { page } from '$app/stores';
 
 	let shareDialogOpen = false;
+	let isCreatingBudget = false;
 </script>
 
 <div class="space-y-6">
@@ -190,9 +192,25 @@
 				Create a budget for this month to start tracking your expenses.
 			</p>
 			<button
-				class="px-6 py-2 bg-primary text-white rounded-lg hover:bg-gray-800 transition font-medium"
+				disabled={isCreatingBudget}
+				onclick={async () => {
+					isCreatingBudget = true;
+					try {
+						const userId = $page.data.userId;
+						if (!userId) {
+							console.error('[Overview] No userId available for budget creation');
+							return;
+						}
+						await createBudgetForCurrentMonth(userId);
+					} catch (error) {
+						console.error('[Overview] Failed to create budget:', error);
+					} finally {
+						isCreatingBudget = false;
+					}
+				}}
+				class="px-6 py-2 bg-primary text-white rounded-lg hover:bg-gray-800 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
 			>
-				Create Budget
+				{isCreatingBudget ? 'Creating...' : 'Create Budget'}
 			</button>
 		</section>
 	{/if}

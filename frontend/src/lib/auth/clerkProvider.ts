@@ -53,23 +53,59 @@ export class ClerkTokenProvider implements AuthTokenProvider {
    */
   async getToken(): Promise<string | null> {
     try {
+      console.log("[Clerk Provider] getToken called");
+
       if (!this.clerk) {
+        console.warn("[Clerk Provider] Clerk client not initialized");
+        console.warn(
+          "[Clerk Provider] This may mean Clerk is still loading or initialization failed"
+        );
         return null;
       }
+
+      console.log("[Clerk Provider] Clerk client is initialized");
 
       // Get active session
       const session = this.clerk.session;
 
       if (!session) {
+        console.warn("[Clerk Provider] No active session found");
+        console.warn(
+          "[Clerk Provider] User may not be signed in or session has expired"
+        );
+        console.log("[Clerk Provider] Clerk state:", {
+          hasUser: !!this.clerk.user,
+          userId: this.clerk.user?.id || null,
+        });
         return null;
       }
+
+      console.log("[Clerk Provider] Active session found, retrieving token...");
 
       // Get JWT token
       const token = await session.getToken();
 
-      return token || null;
+      if (!token) {
+        console.warn("[Clerk Provider] getToken returned null or empty");
+        console.warn(
+          "[Clerk Provider] Session exists but token retrieval failed"
+        );
+        return null;
+      }
+
+      console.log("[Clerk Provider] Token retrieved successfully:", {
+        tokenLength: token.length,
+        tokenPrefix: token.substring(0, 20) + "...",
+      });
+
+      return token;
     } catch (error) {
-      console.error("[Clerk] Error getting token:", error);
+      console.error("[Clerk Provider] Error getting token:", error);
+      console.error("[Clerk Provider] Error details:", {
+        message: error instanceof Error ? error.message : "Unknown error",
+        name: error instanceof Error ? error.name : "Unknown",
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       return null;
     }
   }

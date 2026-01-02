@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/joselitophala/budget-planner-backend/internal/models"
@@ -46,10 +47,21 @@ func NewMiddleware(jwt *JWTClient, queries *models.Queries, requireAuth bool) *M
 // Authenticate verifies the JWT and adds user context to the request
 func (m *Middleware) Authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Log all headers for debugging
+		fmt.Printf("[Auth] All headers received:\n")
+		for key, values := range r.Header {
+			for _, value := range values {
+				fmt.Printf("[Auth]   %s: %s\n", key, value)
+			}
+		}
+		
 		// Extract token from request
 		token, err := ExtractTokenFromRequest(r)
 		if err != nil {
 			if m.requireAuth {
+				fmt.Printf("[Auth] Token extraction failed: %v\n", err)
+				fmt.Printf("[Auth] Request path: %s\n", r.URL.Path)
+				fmt.Printf("[Auth] Authorization header: %s\n", r.Header.Get("Authorization"))
 				utils.Unauthorized(w, "Invalid or missing authorization token")
 				return
 			}
@@ -58,10 +70,14 @@ func (m *Middleware) Authenticate(next http.Handler) http.Handler {
 			return
 		}
 
+		fmt.Printf("[Auth] Token extracted successfully (length: %d)\n", len(token))
+
 		// Verify token
 		userID, err := m.jwt.VerifyToken(token)
 		if err != nil {
 			if m.requireAuth {
+				fmt.Printf("[Auth] Token verification failed: %v\n", err)
+				fmt.Printf("[Auth] Request path: %s\n", r.URL.Path)
 				utils.Unauthorized(w, "Invalid token")
 				return
 			}
@@ -69,18 +85,23 @@ func (m *Middleware) Authenticate(next http.Handler) http.Handler {
 			return
 		}
 
+		fmt.Printf("[Auth] Token verified successfully for user: %s\n", userID)
+
 		// Look up user in our database (assuming userID matches clerk_user_id)
 		user, err := m.queries.GetUserByClerkID(r.Context(), userID)
 		if err != nil {
 			// User exists in auth system but not in our database
 			// This could mean they haven't completed onboarding
 			if m.requireAuth {
+				fmt.Printf("[Auth] User lookup failed for clerk_user_id %s: %v\n", userID, err)
 				utils.NotFound(w, "User not found in database")
 				return
 			}
 			next.ServeHTTP(w, r)
 			return
 		}
+
+		fmt.Printf("[Auth] User found in database: %s (internal ID: %s)\n", user.ClerkUserID, user.ID)
 
 		// Add user context to request
 		ctx := r.Context()
