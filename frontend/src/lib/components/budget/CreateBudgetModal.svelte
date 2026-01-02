@@ -65,13 +65,15 @@
     }
 
     // Validate total limit (required)
-    if (!totalLimit || totalLimit.trim() === "") {
+    // totalLimit can be a string or number due to type="number" on input
+    const limitStr = String(totalLimit || "").trim();
+    if (!limitStr) {
       if (updateErrors) {
         errors.totalLimit = "Total limit is required";
       }
       valid = false;
     } else {
-      const limitValue = parseFloat(totalLimit);
+      const limitValue = Number(totalLimit);
       if (isNaN(limitValue) || limitValue <= 0) {
         if (updateErrors) {
           errors.totalLimit = "Total limit must be a positive number";
@@ -100,7 +102,7 @@
       return;
     }
 
-    const limitValue = parseFloat(totalLimit);
+    const limitValue = Number(totalLimit);
     const budgetData = {
       name: name.trim() || undefined,
       totalLimit: limitValue,
