@@ -4,10 +4,10 @@
   import { Input } from "$lib/components/ui/input";
   import { Label } from "$lib/components/ui/label";
   import { currentMonth } from "$lib/stores/budgets";
-  import { currency } from "$lib/stores/settings";
-  import { parseMonthKey } from "$lib/utils/format";
+  import { currency, getCurrencyLocale } from "$lib/stores/settings";
+  import { getCurrencySymbol, parseMonthKey } from "$lib/utils/format";
   import { createEventDispatcher } from "svelte";
-  import { get } from "svelte/store";
+  import { get, derived } from "svelte/store";
 
   export let isOpen = false;
   export let isCreating = false;
@@ -24,60 +24,83 @@
     totalLimit: "",
   };
 
-  // Computed: Form is valid
-  let formValid = false;
-
-  // Watch form changes to update validity
-  $: formValid = validateForm(false);
-
-  // Get current month display
-  $: monthDisplay = (() => {
-    const monthValue = get(currentMonth);
-    if (!monthValue) return "";
-    const date = parseMonthKey(monthValue);
-    return date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
-  })();
-
-  // Get currency symbol
-  $: currencySymbol = (() => {
-    const currencyValue = get(currency);
-    return currencyValue === "PHP"
-      ? "₱"
-      : currencyValue === "USD"
-        ? "$"
-        : currencyValue === "EUR"
-          ? "€"
-          : currencyValue === "GBP"
-            ? "£"
-            : "¥";
-  })();
+  // Computed: Form is valid - only recompute when totalLimit changes
+  $: formValid = isTotalLimitValid();
 
   /**
-   * Validate form
-   * @param updateErrors - Whether to update error messages
-   * @returns true if form is valid
+   * Get current month display with locale-aware formatting
+   * Uses user's currency locale for consistent date formatting
    */
-  function validateForm(updateErrors: boolean = true): boolean {
-    let valid = true;
+  $: monthDisplay = getMonthDisplay();
 
-    if (updateErrors) {
-      errors = { name: "", totalLimit: "" };
+  // Get currency symbol using utility function
+  $: currencySymbol = getCurrencySymbol(get(currency));
+
+  /**
+   * Format month display - extracted for better readability and reusability
+   */
+  function getMonthDisplay(): string {
+    const monthValue = get(currentMonth);
+
+    // Handle empty or undefined month value
+    if (!monthValue) {
+      return "";
     }
 
-    // Validate total limit (required)
-    // totalLimit can be a string or number due to type="number" on input
-    const limitStr = String(totalLimit || "").trim();
-    if (!limitStr) {
-      if (updateErrors) {
-        errors.totalLimit = "Total limit is required";
+    try {
+      // Parse month key to Date object
+      const date = parseMonthKey(monthValue);
+
+      // Validate the parsed date is valid
+      if (isNaN(date.getTime())) {
+        console.warn(`Invalid month key format: ${monthValue}`);
+        return "";
       }
+
+      // Use locale-aware formatting based on user's currency preference
+      const locale = getCurrencyLocale(get(currency));
+      return date.toLocaleDateString(locale, {
+        month: "long",
+        year: "numeric",
+      });
+    } catch (error) {
+      console.error(
+        `Error formatting month display for key "${monthValue}":`,
+        error
+      );
+      return "";
+    }
+  }
+
+  /**
+   * Check if total limit is valid (without updating errors)
+   */
+  function isTotalLimitValid(): boolean {
+    const limitStr = String(totalLimit || "").trim();
+    if (!limitStr) return false;
+    
+    const limitValue = Number(limitStr);
+    return !isNaN(limitValue) && limitValue > 0;
+  }
+
+  /**
+   * Validate form and update error messages
+   * @returns true if form is valid
+   */
+  function validateForm(): boolean {
+    let valid = true;
+    errors = { name: "", totalLimit: "" };
+
+    // Validate total limit (required)
+    const limitStr = String(totalLimit || "").trim();
+
+    if (!limitStr) {
+      errors.totalLimit = "Total limit is required";
       valid = false;
     } else {
-      const limitValue = Number(totalLimit);
+      const limitValue = Number(limitStr);
       if (isNaN(limitValue) || limitValue <= 0) {
-        if (updateErrors) {
-          errors.totalLimit = "Total limit must be a positive number";
-        }
+        errors.totalLimit = "Total limit must be a positive number";
         valid = false;
       }
     }
@@ -98,10 +121,11 @@
   }
 
   function handleSubmit() {
-    if (!validateForm(true)) {
+    if (!validateForm()) {
       return;
     }
 
+    // Parse once and reuse
     const limitValue = Number(totalLimit);
     const budgetData = {
       name: name.trim() || undefined,
@@ -127,6 +151,7 @@
   description="Set up a new budget for the selected month"
   className="max-w-md"
 >
+  <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
   <form
     on:submit|preventDefault={handleSubmit}
     on:keydown={handleKeydown}
@@ -241,7 +266,7 @@
       </Button>
       <Button
         type="submit"
-        disabled={!formValid || isCreating}
+        disabled={isCreating}
         class="min-w-[120px] font-medium"
       >
         {#if isCreating}

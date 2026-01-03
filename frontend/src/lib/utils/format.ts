@@ -1,12 +1,77 @@
 /**
+ * Supported currency codes with their symbols
+ */
+export type CurrencyCode = 'PHP' | 'USD' | 'EUR' | 'GBP' | 'JPY' | 'CNY' | 'CAD' | 'AUD';
+
+/**
+ * Currency symbol mapping for supported currencies
+ */
+const CURRENCY_SYMBOLS: Record<CurrencyCode, string> = {
+	PHP: '₱',
+	USD: '$',
+	EUR: '€',
+	GBP: '£',
+	JPY: '¥',
+	CNY: '¥',
+	CAD: 'C$',
+	AUD: 'A$'
+};
+
+/**
+ * Get currency symbol for a given currency code
+ * @param currencyCode - ISO 4217 currency code (e.g., 'USD', 'EUR')
+ * @returns Currency symbol or empty string if currency is not supported
+ *
+ * @example
+ * getCurrencySymbol('USD') // returns '$'
+ * getCurrencySymbol('EUR') // returns '€'
+ * getCurrencySymbol('INVALID') // returns ''
+ */
+export function getCurrencySymbol(currencyCode: string): string {
+	// Validate input
+	if (!currencyCode || typeof currencyCode !== 'string') {
+		console.warn('getCurrencySymbol: Invalid currency code provided');
+		return '';
+	}
+	
+	// Normalize to uppercase for case-insensitive matching
+	const normalizedCode = currencyCode.toUpperCase() as CurrencyCode;
+	
+	// Return symbol if currency is supported
+	return CURRENCY_SYMBOLS[normalizedCode] || '';
+}
+
+/**
+ * Format a number as currency using the specified currency code
+ * @param amount - The amount to format
+ * @param currencyCode - ISO 4217 currency code (defaults to 'PHP')
+ * @returns Formatted currency string
+ *
+ * @example
+ * formatCurrencyWithCode(1000, 'USD') // returns '$1,000.00'
+ * formatCurrencyWithCode(1000, 'EUR') // returns '€1,000.00'
+ */
+export function formatCurrencyWithCode(amount: number, currencyCode: CurrencyCode = 'PHP'): string {
+	// Validate amount
+	if (typeof amount !== 'number' || isNaN(amount)) {
+		console.warn('formatCurrencyWithCode: Invalid amount provided');
+		return '';
+	}
+	
+	return new Intl.NumberFormat('en-US', {
+		style: 'currency',
+		currency: currencyCode,
+		minimumFractionDigits: 2,
+		maximumFractionDigits: 2
+	}).format(amount);
+}
+
+/**
  * Format a number as currency (Philippine Peso)
+ * @deprecated Use formatCurrencyWithCode instead for multi-currency support
  */
 export function formatCurrency(amount: number): string {
-	return new Intl.NumberFormat('en-PH', {
-		style: 'currency',
-		currency: 'PHP',
-		minimumFractionDigits: 2
-	}).format(amount);
+	return formatCurrencyWithCode(amount, 'PHP');
 }
 
 /**
