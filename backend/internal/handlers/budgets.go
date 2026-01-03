@@ -25,15 +25,17 @@ func NewBudgetHandler(queries *models.Queries) *BudgetHandler {
 
 // BudgetResponse represents a budget in API responses
 type BudgetResponse struct {
-	ID         string  `json:"id"`
-	UserID     string  `json:"userId"`
-	Name       *string `json:"name,omitempty"`
-	Month      string  `json:"month"`
-	TotalLimit float64 `json:"totalLimit"`
-	Spent      float64 `json:"spent"`
-	Remaining  float64 `json:"remaining"`
-	CreatedAt  string  `json:"createdAt"`
-	UpdatedAt  string  `json:"updatedAt"`
+	ID         string   `json:"id"`
+	UserID     string   `json:"userId"`
+	Name       *string  `json:"name,omitempty"`
+	Month      string   `json:"month"`
+	TotalLimit float64  `json:"totalLimit"`
+	TotalIncome *float64 `json:"totalIncome,omitempty"`
+	Savings    *float64 `json:"savings,omitempty"`
+	Spent      float64  `json:"spent"`
+	Remaining  float64  `json:"remaining"`
+	CreatedAt  string   `json:"createdAt"`
+	UpdatedAt  string   `json:"updatedAt"`
 }
 
 // BudgetCategoryResponse represents a budget category in API responses
@@ -51,15 +53,17 @@ type BudgetCategoryResponse struct {
 
 // CreateBudgetRequest represents the create budget request
 type CreateBudgetRequest struct {
-	Name       string  `json:"name"`
-	Month      string  `json:"month"` // Format: YYYY-MM-DD (first day of month)
-	TotalLimit float64 `json:"totalLimit"`
+	Name       string   `json:"name"`
+	Month      string   `json:"month"` // Format: YYYY-MM-DD (first day of month)
+	TotalLimit float64  `json:"totalLimit"`
+	TotalIncome *float64 `json:"totalIncome,omitempty"`
 }
 
 // UpdateBudgetRequest represents the update budget request
 type UpdateBudgetRequest struct {
 	Name       *string  `json:"name,omitempty"`
 	TotalLimit *float64 `json:"totalLimit,omitempty"`
+	TotalIncome *float64 `json:"totalIncome,omitempty"`
 }
 
 // AddBudgetCategoryRequest represents the request to add a category to a budget
@@ -91,13 +95,17 @@ func (h *BudgetHandler) ListBudgets(w http.ResponseWriter, r *http.Request) {
 	for i, budget := range budgets {
 		spent, _ := h.getBudgetSpent(r.Context(), budget.ID)
 		totalLimit := utils.NumericToFloat64(budget.TotalLimit)
+		totalIncome := utils.NumericToFloat64Ptr(budget.TotalIncome)
 		name := utils.TextToStringPtr(budget.Name)
+		savings := calculateSavings(totalIncome, totalLimit)
 		response[i] = BudgetResponse{
 			ID:         budget.ID,
 			UserID:     userID,
 			Name:       name,
 			Month:      utils.DateToTime(budget.Month).Format("2006-01-02"),
 			TotalLimit: totalLimit,
+			TotalIncome: totalIncome,
+			Savings:    savings,
 			Spent:      spent,
 			Remaining:  totalLimit - spent,
 			CreatedAt:  utils.TimestamptzToTime(budget.CreatedAt).Format(time.RFC3339),
@@ -140,7 +148,9 @@ func (h *BudgetHandler) GetBudgetByMonth(w http.ResponseWriter, r *http.Request)
 
 	spent, _ := h.getBudgetSpent(r.Context(), budget.ID)
 	totalLimit := utils.NumericToFloat64(budget.TotalLimit)
+	totalIncome := utils.NumericToFloat64Ptr(budget.TotalIncome)
 	name := utils.TextToStringPtr(budget.Name)
+	savings := calculateSavings(totalIncome, totalLimit)
 
 	utils.SendSuccess(w, BudgetResponse{
 		ID:         budget.ID,
@@ -148,6 +158,8 @@ func (h *BudgetHandler) GetBudgetByMonth(w http.ResponseWriter, r *http.Request)
 		Name:       name,
 		Month:      utils.DateToTime(budget.Month).Format("2006-01-02"),
 		TotalLimit: totalLimit,
+		TotalIncome: totalIncome,
+		Savings:    savings,
 		Spent:      spent,
 		Remaining:  totalLimit - spent,
 		CreatedAt:  utils.TimestamptzToTime(budget.CreatedAt).Format(time.RFC3339),
@@ -171,8 +183,10 @@ func (h *BudgetHandler) GetBudget(w http.ResponseWriter, r *http.Request) {
 
 	spent, _ := h.getBudgetSpent(r.Context(), budget.ID)
 	totalLimit := utils.NumericToFloat64(budget.TotalLimit)
+	totalIncome := utils.NumericToFloat64Ptr(budget.TotalIncome)
 	name := utils.TextToStringPtr(budget.Name)
 	userID := utils.UUIDToString(budget.UserID)
+	savings := calculateSavings(totalIncome, totalLimit)
 
 	utils.SendSuccess(w, BudgetResponse{
 		ID:         budget.ID,
@@ -180,6 +194,8 @@ func (h *BudgetHandler) GetBudget(w http.ResponseWriter, r *http.Request) {
 		Name:       name,
 		Month:      utils.DateToTime(budget.Month).Format("2006-01-02"),
 		TotalLimit: totalLimit,
+		TotalIncome: totalIncome,
+		Savings:    savings,
 		Spent:      spent,
 		Remaining:  totalLimit - spent,
 		CreatedAt:  utils.TimestamptzToTime(budget.CreatedAt).Format(time.RFC3339),
@@ -201,6 +217,12 @@ func (h *BudgetHandler) CreateBudget(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Validate: if totalIncome is provided, it must be >= 0
+	if req.TotalIncome != nil && *req.TotalIncome < 0 {
+		utils.BadRequest(w, "Total income cannot be negative")
+		return
+	}
+
 	// Parse month
 	month, err := time.Parse("2006-01-02", req.Month)
 	if err != nil {
@@ -213,6 +235,7 @@ func (h *BudgetHandler) CreateBudget(w http.ResponseWriter, r *http.Request) {
 		Name:       utils.PgText(req.Name),
 		Month:      utils.PgDate(month),
 		TotalLimit: utils.PgNumeric(req.TotalLimit),
+		TotalIncome: utils.PgNumericPtr(req.TotalIncome),
 	})
 	if err != nil {
 		utils.InternalError(w, "Failed to create budget")
@@ -220,7 +243,9 @@ func (h *BudgetHandler) CreateBudget(w http.ResponseWriter, r *http.Request) {
 	}
 
 	totalLimit := utils.NumericToFloat64(budget.TotalLimit)
+	totalIncome := utils.NumericToFloat64Ptr(budget.TotalIncome)
 	name := utils.TextToStringPtr(budget.Name)
+	savings := calculateSavings(totalIncome, totalLimit)
 
 	utils.SendCreated(w, BudgetResponse{
 		ID:         budget.ID,
@@ -228,6 +253,8 @@ func (h *BudgetHandler) CreateBudget(w http.ResponseWriter, r *http.Request) {
 		Name:       name,
 		Month:      utils.DateToTime(budget.Month).Format("2006-01-02"),
 		TotalLimit: totalLimit,
+		TotalIncome: totalIncome,
+		Savings:    savings,
 		Spent:      0,
 		Remaining:  totalLimit,
 		CreatedAt:  utils.TimestamptzToTime(budget.CreatedAt).Format(time.RFC3339),
@@ -237,6 +264,12 @@ func (h *BudgetHandler) CreateBudget(w http.ResponseWriter, r *http.Request) {
 
 // UpdateBudget updates an existing budget
 func (h *BudgetHandler) UpdateBudget(w http.ResponseWriter, r *http.Request) {
+	userID, ok := auth.GetUserID(r)
+	if !ok {
+		utils.Unauthorized(w, "Not authenticated")
+		return
+	}
+
 	budgetID := chi.URLParam(r, "id")
 	if budgetID == "" {
 		utils.BadRequest(w, "Budget ID is required")
@@ -249,10 +282,29 @@ func (h *BudgetHandler) UpdateBudget(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Validate: if totalIncome is provided, it must be >= 0
+	if req.TotalIncome != nil && *req.TotalIncome < 0 {
+		utils.BadRequest(w, "Total income cannot be negative")
+		return
+	}
+
+	// Verify ownership before updating
+	existingBudget, err := h.queries.GetBudgetByID(r.Context(), budgetID)
+	if err != nil {
+		utils.NotFound(w, "Budget not found")
+		return
+	}
+
+	if existingBudget.UserID != utils.PgUUID(userID) {
+		utils.Forbidden(w, "You don't have permission to update this budget")
+		return
+	}
+
 	budget, err := h.queries.UpdateBudget(r.Context(), models.UpdateBudgetParams{
 		ID:         budgetID,
 		Name:       utils.PgTextPtr(req.Name),
 		TotalLimit: utils.PgNumericPtr(req.TotalLimit),
+		TotalIncome: utils.PgNumericPtr(req.TotalIncome),
 	})
 	if err != nil {
 		utils.InternalError(w, "Failed to update budget")
@@ -261,8 +313,9 @@ func (h *BudgetHandler) UpdateBudget(w http.ResponseWriter, r *http.Request) {
 
 	spent, _ := h.getBudgetSpent(r.Context(), budget.ID)
 	totalLimit := utils.NumericToFloat64(budget.TotalLimit)
+	totalIncome := utils.NumericToFloat64Ptr(budget.TotalIncome)
 	name := utils.TextToStringPtr(budget.Name)
-	userID := utils.UUIDToString(budget.UserID)
+	savings := calculateSavings(totalIncome, totalLimit)
 
 	utils.SendSuccess(w, BudgetResponse{
 		ID:         budget.ID,
@@ -270,6 +323,8 @@ func (h *BudgetHandler) UpdateBudget(w http.ResponseWriter, r *http.Request) {
 		Name:       name,
 		Month:      utils.DateToTime(budget.Month).Format("2006-01-02"),
 		TotalLimit: totalLimit,
+		TotalIncome: totalIncome,
+		Savings:    savings,
 		Spent:      spent,
 		Remaining:  totalLimit - spent,
 		CreatedAt:  utils.TimestamptzToTime(budget.CreatedAt).Format(time.RFC3339),
@@ -445,8 +500,18 @@ func (h *BudgetHandler) getBudgetSpent(ctx context.Context, budgetID string) (fl
 		_, err := fmt.Sscanf(string(v), "%f", &f)
 		return f, err
 	default:
-		return 0, nil
+		fmt.Printf("ERROR: Unexpected type for GetBudgetSpent result: %T\n", v)
+		return 0, fmt.Errorf("unexpected type: %T", v)
 	}
+}
+
+// Helper function to calculate savings
+func calculateSavings(totalIncome *float64, totalLimit float64) *float64 {
+	if totalIncome == nil {
+		return nil
+	}
+	savings := *totalIncome - totalLimit
+	return &savings
 }
 
 // Helper function to get category spent amount for a budget
@@ -474,6 +539,7 @@ func (h *BudgetHandler) getCategorySpent(ctx context.Context, budgetID, category
 		_, err := fmt.Sscanf(string(v), "%f", &f)
 		return f, err
 	default:
-		return 0, nil
+		fmt.Printf("ERROR: Unexpected type for GetCategorySpent result: %T\n", v)
+		return 0, fmt.Errorf("unexpected type: %T", v)
 	}
 }

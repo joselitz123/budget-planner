@@ -28,6 +28,7 @@ type Budget struct {
 	Name       pgtype.Text        `json:"name"`
 	Month      pgtype.Date        `json:"month"`
 	TotalLimit pgtype.Numeric     `json:"totalLimit"`
+	TotalIncome pgtype.Numeric    `json:"totalIncome"`
 	CreatedAt  pgtype.Timestamptz `json:"createdAt"`
 	UpdatedAt  pgtype.Timestamptz `json:"updatedAt"`
 	Deleted    pgtype.Bool        `json:"deleted"`

@@ -14,8 +14,8 @@ WHERE user_id = $1 AND month = $2 AND deleted = false
 LIMIT 1;
 
 -- name: CreateBudget :one
-INSERT INTO budgets (user_id, name, month, total_limit)
-VALUES ($1, $2, $3, $4)
+INSERT INTO budgets (user_id, name, month, total_limit, total_income)
+VALUES ($1, $2, $3, $4, sqlc.narg('total_income'))
 RETURNING *;
 
 -- name: UpdateBudget :one
@@ -23,6 +23,7 @@ UPDATE budgets
 SET
     name = COALESCE(sqlc.narg('name'), name),
     total_limit = COALESCE(sqlc.narg('total_limit'), total_limit),
+    total_income = COALESCE(sqlc.narg('total_income'), total_income),
     updated_at = NOW()
 WHERE id = $1 AND deleted = false
 RETURNING *;

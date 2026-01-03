@@ -1,6 +1,7 @@
 <script lang="ts">
   import { page } from "$app/stores";
-  import CreateBudgetModal from "$lib/components/budget/CreateBudgetModal.svelte";
+  import { budgetsApi } from "$lib/api/budgets";
+  import BudgetFormModal from "$lib/components/budget/BudgetFormModal.svelte";
   import ShareBudgetDialog from "$lib/components/sharing/ShareBudgetDialog.svelte";
   import { Button } from "$lib/components/ui/button";
   import { Skeleton } from "$lib/components/ui/skeleton";
@@ -15,12 +16,14 @@
   import { formatCurrency, formatMonthYear } from "$lib/utils/format";
 
   let shareDialogOpen = false;
-  let showCreateBudgetModal = false;
-  let isCreatingBudget = false;
+  let showBudgetFormModal = false;
+  let formMode: "create" | "edit" = "create";
+  let isSavingBudget = false;
 
   async function handleCreateBudget(data: {
     name?: string;
     totalLimit: number;
+    totalIncome?: number;
   }): Promise<void> {
     const userId = $page.data.userId;
     if (!userId) {
@@ -29,15 +32,16 @@
       return;
     }
 
-    isCreatingBudget = true;
+    isSavingBudget = true;
     try {
       await createBudgetForCurrentMonth(userId, {
         name: data.name,
-        totalLimit: data.totalLimit
+        totalLimit: data.totalLimit,
+        totalIncome: data.totalIncome,
       });
 
       showToast("Budget created successfully!", "success");
-      showCreateBudgetModal = false;
+      showBudgetFormModal = false;
     } catch (error) {
       console.error("[Overview] Failed to create budget:", error);
       showToast(
@@ -45,7 +49,56 @@
         "error"
       );
     } finally {
-      isCreatingBudget = false;
+      isSavingBudget = false;
+    }
+  }
+
+  async function handleUpdateBudget(data: {
+    name?: string;
+    totalLimit: number;
+    totalIncome?: number;
+  }): Promise<void> {
+    if (!$currentMonthBudget) {
+      console.error("[Overview] No current budget available for update");
+      showToast("Failed to update budget: Budget not found", "error");
+      return;
+    }
+
+    isSavingBudget = true;
+    try {
+      await budgetsApi.updateBudget($currentMonthBudget.id, data);
+      showToast("Budget updated successfully!", "success");
+      showBudgetFormModal = false;
+      // Reload budgets to get updated data
+      const { loadBudgets } = await import("$lib/stores/budgets");
+      await loadBudgets();
+    } catch (error) {
+      console.error("[Overview] Failed to update budget:", error);
+      showToast(
+        error instanceof Error ? error.message : "Failed to update budget",
+        "error"
+      );
+    } finally {
+      isSavingBudget = false;
+    }
+  }
+
+  function openCreateModal() {
+    formMode = "create";
+    showBudgetFormModal = true;
+  }
+
+  function openEditModal() {
+    formMode = "edit";
+    showBudgetFormModal = true;
+  }
+
+  function handleFormSubmit(event: CustomEvent) {
+    const data = event.detail;
+    if (formMode === "create") {
+      handleCreateBudget(data);
+    } else {
+      handleUpdateBudget(data);
     }
   }
 </script>
@@ -64,14 +117,25 @@
       </p>
     </div>
     {#if $currentMonthBudget}
-      <Button
-        onclick={() => (shareDialogOpen = true)}
-        aria-label="Share this budget"
-        class="shrink-0"
-      >
-        <span class="material-icons-outlined text-sm mr-1">share</span>
-        Share
-      </Button>
+      <div class="flex space-x-2">
+        <Button
+          onclick={openEditModal}
+          aria-label="Edit this budget"
+          class="shrink-0"
+          variant="outline"
+        >
+          <span class="material-icons-outlined text-sm mr-1">edit</span>
+          Edit
+        </Button>
+        <Button
+          onclick={() => (shareDialogOpen = true)}
+          aria-label="Share this budget"
+          class="shrink-0"
+        >
+          <span class="material-icons-outlined text-sm mr-1">share</span>
+          Share
+        </Button>
+      </div>
     {/if}
   </div>
 
@@ -259,11 +323,11 @@
         Create a budget for this month to start tracking your expenses.
       </p>
       <Button
-        disabled={isCreatingBudget}
-        onclick={() => (showCreateBudgetModal = true)}
+        disabled={isSavingBudget}
+        onclick={openCreateModal}
         aria-label="Create a new budget"
       >
-        {isCreatingBudget ? "Creating..." : "Create Budget"}
+        {isSavingBudget ? "Creating..." : "Create Budget"}
       </Button>
     </section>
   {/if}
@@ -277,9 +341,24 @@
   />
 {/if}
 
-<CreateBudgetModal
-  bind:isOpen={showCreateBudgetModal}
-  bind:isCreating={isCreatingBudget}
-  on:close={() => (showCreateBudgetModal = false)}
-  on:submit={(e) => handleCreateBudget(e.detail)}
+<BudgetFormModal
+  bind:isOpen={showBudgetFormModal}
+  mode={formMode}
+  budgetData={$currentMonthBudget
+    ? {
+        id: $currentMonthBudget.id,
+        userId: $currentMonthBudget.userId,
+        month: $currentMonthBudget.month,
+        totalLimit: $currentMonthBudget.totalLimit,
+        totalIncome: $currentMonthBudget.totalIncome,
+        spent: $totalSpent,
+        remaining: $currentMonthBudget.totalLimit - $totalSpent,
+        createdAt: $currentMonthBudget.createdAt,
+        updatedAt: $currentMonthBudget.updatedAt,
+      }
+    : undefined}
+  bind:isSaving={isSavingBudget}
+  currentSpending={$totalSpent}
+  on:close={() => (showBudgetFormModal = false)}
+  on:submit={handleFormSubmit}
 />

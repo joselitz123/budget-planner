@@ -38,9 +38,9 @@ func (q *Queries) AddBudgetCategory(ctx context.Context, arg AddBudgetCategoryPa
 }
 
 const createBudget = `-- name: CreateBudget :one
-INSERT INTO budgets (user_id, name, month, total_limit)
-VALUES ($1, $2, $3, $4)
-RETURNING id, user_id, name, month, total_limit, created_at, updated_at, deleted
+INSERT INTO budgets (user_id, name, month, total_limit, total_income)
+VALUES ($1, $2, $3, $4, sqlc.narg('total_income'))
+RETURNING id, user_id, name, month, total_limit, total_income, created_at, updated_at, deleted
 `
 
 type CreateBudgetParams struct {
@@ -48,6 +48,7 @@ type CreateBudgetParams struct {
 	Name       pgtype.Text    `json:"name"`
 	Month      pgtype.Date    `json:"month"`
 	TotalLimit pgtype.Numeric `json:"totalLimit"`
+	TotalIncome pgtype.Numeric `json:"totalIncome"`
 }
 
 func (q *Queries) CreateBudget(ctx context.Context, arg CreateBudgetParams) (Budget, error) {
@@ -56,6 +57,7 @@ func (q *Queries) CreateBudget(ctx context.Context, arg CreateBudgetParams) (Bud
 		arg.Name,
 		arg.Month,
 		arg.TotalLimit,
+		arg.TotalIncome,
 	)
 	var i Budget
 	err := row.Scan(
@@ -64,6 +66,7 @@ func (q *Queries) CreateBudget(ctx context.Context, arg CreateBudgetParams) (Bud
 		&i.Name,
 		&i.Month,
 		&i.TotalLimit,
+		&i.TotalIncome,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Deleted,
@@ -83,7 +86,7 @@ func (q *Queries) DeleteBudget(ctx context.Context, id string) error {
 }
 
 const getBudgetByID = `-- name: GetBudgetByID :one
-SELECT id, user_id, name, month, total_limit, created_at, updated_at, deleted FROM budgets
+SELECT id, user_id, name, month, total_limit, total_income, created_at, updated_at, deleted FROM budgets
 WHERE id = $1 AND deleted = false
 LIMIT 1
 `
@@ -97,6 +100,7 @@ func (q *Queries) GetBudgetByID(ctx context.Context, id string) (Budget, error) 
 		&i.Name,
 		&i.Month,
 		&i.TotalLimit,
+		&i.TotalIncome,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Deleted,
@@ -105,7 +109,7 @@ func (q *Queries) GetBudgetByID(ctx context.Context, id string) (Budget, error) 
 }
 
 const getBudgetByMonth = `-- name: GetBudgetByMonth :one
-SELECT id, user_id, name, month, total_limit, created_at, updated_at, deleted FROM budgets
+SELECT id, user_id, name, month, total_limit, total_income, created_at, updated_at, deleted FROM budgets
 WHERE user_id = $1 AND month = $2 AND deleted = false
 LIMIT 1
 `
@@ -124,6 +128,7 @@ func (q *Queries) GetBudgetByMonth(ctx context.Context, arg GetBudgetByMonthPara
 		&i.Name,
 		&i.Month,
 		&i.TotalLimit,
+		&i.TotalIncome,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Deleted,
@@ -198,7 +203,7 @@ func (q *Queries) GetBudgetSpent(ctx context.Context, budgetID pgtype.UUID) (int
 }
 
 const listUserBudgets = `-- name: ListUserBudgets :many
-SELECT id, user_id, name, month, total_limit, created_at, updated_at, deleted FROM budgets
+SELECT id, user_id, name, month, total_limit, total_income, created_at, updated_at, deleted FROM budgets
 WHERE user_id = $1 AND deleted = false
 ORDER BY month DESC
 `
@@ -218,6 +223,7 @@ func (q *Queries) ListUserBudgets(ctx context.Context, userID pgtype.UUID) ([]Bu
 			&i.Name,
 			&i.Month,
 			&i.TotalLimit,
+			&i.TotalIncome,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.Deleted,
@@ -247,19 +253,21 @@ UPDATE budgets
 SET
     name = COALESCE($2, name),
     total_limit = COALESCE($3, total_limit),
+    total_income = COALESCE(sqlc.narg('total_income'), total_income),
     updated_at = NOW()
 WHERE id = $1 AND deleted = false
-RETURNING id, user_id, name, month, total_limit, created_at, updated_at, deleted
+RETURNING id, user_id, name, month, total_limit, total_income, created_at, updated_at, deleted
 `
 
 type UpdateBudgetParams struct {
 	ID         string         `json:"id"`
 	Name       pgtype.Text    `json:"name"`
 	TotalLimit pgtype.Numeric `json:"totalLimit"`
+	TotalIncome pgtype.Numeric `json:"totalIncome"`
 }
 
 func (q *Queries) UpdateBudget(ctx context.Context, arg UpdateBudgetParams) (Budget, error) {
-	row := q.db.QueryRow(ctx, updateBudget, arg.ID, arg.Name, arg.TotalLimit)
+	row := q.db.QueryRow(ctx, updateBudget, arg.ID, arg.Name, arg.TotalLimit, arg.TotalIncome)
 	var i Budget
 	err := row.Scan(
 		&i.ID,
@@ -267,6 +275,7 @@ func (q *Queries) UpdateBudget(ctx context.Context, arg UpdateBudgetParams) (Bud
 		&i.Name,
 		&i.Month,
 		&i.TotalLimit,
+		&i.TotalIncome,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Deleted,
